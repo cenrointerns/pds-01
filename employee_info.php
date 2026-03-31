@@ -28,7 +28,7 @@ if (!$employee) {
 // Handle image path and fallback
 $image_path = 'assets/image/employee/' . $employee['image'];
 if (!file_exists($image_path) || empty($employee['image'])) {
-    $image_path = 'assets/image/employee/default.png'; // placeholder image
+    $image_path = 'assets/image/employee/default.png';
 }
 
 $stmt->close();
@@ -42,6 +42,7 @@ $conn->close();
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title><?= htmlspecialchars($employee['name']); ?> - Employee Info</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.4/css/all.min.css">
+
 <style>
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -99,39 +100,38 @@ body {
 .employee-info p span {
     font-weight: bold;
 }
-.employee-buttons {
-    display: flex;
-    flex-wrap: wrap;
+
+/* TABLE STYLE */
+.details-section {
     padding: 20px;
-    gap: 10px;
-    justify-content: center;
-    border-top: 1px solid #eee;
+}
+.details-section h3 {
+    margin-bottom: 15px;
+    color: #333;
+}
+.details-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 15px;
+    background: #fff;
+}
+.details-table th {
+    background: #4facfe;
+    color: white;
+    padding: 10px;
+    text-align: left;
+}
+.details-table td {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+    color: #555;
+}
+.details-table tr:nth-child(even) {
     background: #f9f9f9;
 }
-.employee-buttons a {
-    flex: 1 1 120px;
-    text-align: center;
-    padding: 12px 10px;
-    border-radius: 8px;
-    text-decoration: none;
-    color: white;
-    font-weight: bold;
-    transition: 0.3s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
+.details-table tr:hover {
+    background: #f1f1f1;
 }
-.employee-buttons a i {
-    font-size: 16px;
-}
-.pds { background-color: #007bff; }
-.saln { background-color: #28a745; }
-.ipc  { background-color: #ffc107; color: #333; }
-.opc  { background-color: #17a2b8; }
-.service { background-color: #6f42c1; }
-.designation { background-color: #fd7e14; }
-.employee-buttons a:hover { opacity: 0.85; }
 
 @media (max-width: 800px) {
     .employee-header {
@@ -148,29 +148,31 @@ body {
 }
 </style>
 </head>
+
 <body>
 
 <div class="container">
+
+    <!-- Employee Header -->
     <div class="employee-header">
-        <!-- Employee Image -->
+        
+        <!-- Image -->
         <div class="employee-image">
             <img src="<?= htmlspecialchars($image_path); ?>" 
                  alt="<?= htmlspecialchars($employee['name']); ?>">
         </div>
 
-        <!-- Employee Info -->
+        <!-- Info -->
         <div class="employee-info">
             <h2><?= htmlspecialchars($employee['name']); ?></h2>
-            
-            <!-- Left Column -->
+
             <div class="info-left">
                 <p><span>Age:</span> <?= htmlspecialchars($employee['age']); ?></p>
                 <p><span>Gender:</span> <?= htmlspecialchars($employee['gender'] ?? 'N/A'); ?></p>
                 <p><span>Date of Birth:</span> <?= htmlspecialchars($employee['date_of_birth'] ?? 'N/A'); ?></p>
                 <p><span>NOSCA ITEM NUMBER:</span> <?= htmlspecialchars($employee['nosca_item_number'] ?? 'N/A'); ?></p>
             </div>
-            
-            <!-- Right Column -->
+
             <div class="info-right">
                 <p><span>Place of Assignment:</span> <?= htmlspecialchars($employee['place_of_assignment'] ?? 'N/A'); ?></p>
                 <p><span>Position Title:</span> <?= htmlspecialchars($employee['position_title'] ?? 'N/A'); ?></p>
@@ -182,15 +184,34 @@ body {
         </div>
     </div>
 
-    <!-- Buttons -->
-    <div class="employee-buttons">
-        <a href="#" class="pds"><i class="fas fa-file-alt"></i> PDS</a>
-        <a href="#" class="saln"><i class="fas fa-file-signature"></i> SALN</a>
-        <a href="#" class="ipc"><i class="fas fa-file"></i> IPC</a>
-        <a href="#" class="opc"><i class="fas fa-file-contract"></i> OPC</a>
-        <a href="#" class="service"><i class="fas fa-briefcase"></i> Service Record</a>
-        <a href="#" class="designation"><i class="fas fa-id-badge"></i> Designation</a>
+    <!-- Employment Details Table -->
+    <div class="details-section">
+        <h3>Employment Details</h3>
+
+        <table class="details-table">
+            <thead>
+                <tr>
+                    <th>Civil Service Eligibility</th>
+                    <th>Position Title</th>
+                    <th>Education</th>
+                    <th>Salary Grade</th>
+                    <th>Date of Appointment</th>
+                    <th>Length of Service</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><?= htmlspecialchars($employee['civil_service_eligibility'] ?? 'N/A'); ?></td>
+                    <td><?= htmlspecialchars($employee['position_title'] ?? 'N/A'); ?></td>
+                    <td><?= htmlspecialchars($employee['education'] ?? 'N/A'); ?></td>
+                    <td><?= htmlspecialchars($employee['salary_grade'] ?? 'N/A'); ?></td>
+                    <td><?= htmlspecialchars($employee['date_of_appointment'] ?? 'N/A'); ?></td>
+                    <td><?= htmlspecialchars($employee['length_of_service'] ?? 'N/A'); ?></td>
+                </tr>
+            </tbody>
+        </table>
     </div>
+
 </div>
 
 </body>
