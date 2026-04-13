@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" href="assets/css/dashboard.css">
-    <title>DENR Dashboard</title>
+    <title>DENR Dashboard
+        
+    </title>
    
 </head>
 <body>
@@ -44,7 +46,7 @@
                 <h3>75</h3>
                 <p>Active Projects</p>
             </div>
-
+xx
             <div class="card">
                 <h3>34</h3>
                 <p>Reports Submitted</p>
