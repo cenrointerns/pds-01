@@ -32,7 +32,7 @@ if (isset($_POST['update'])) {
     if ($conn->query($update)) {
         echo "<script>
             alert('Document updated successfully');
-            window.location='documents.php';
+            window.location='view_documents.php';
         </script>";
     } else {
         echo "Error updating record.";
@@ -44,26 +44,134 @@ if (isset($_POST['update'])) {
 <html>
 <head>
     <title>Edit Document</title>
+
+    <style>
+      body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+
+    /* 🔥 Background image */
+    background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Logo_of_the_Department_of_Environment_and_Natural_Resources.svg/1280px-Logo_of_the_Department_of_Environment_and_Natural_Resources.svg.png'); /* change path here */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+
+    margin: 0;
+    padding: 20px;
+}
+        .container {
+            width: 450px;
+            margin: 80px auto;
+            background: #fff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #2d6cdf;
+        }
+
+        label {
+            font-weight: bold;
+            font-size: 14px;
+            color: #333;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: 0.3s;
+        }
+
+        input:focus {
+            border-color: #2d6cdf;
+            outline: none;
+            box-shadow: 0 0 5px rgba(45,108,223,0.3);
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #2d6cdf;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #1b4fb3;
+        }
+
+        .card-header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .badge {
+            display: inline-block;
+            background: #eee;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+
+        .back {
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .back a {
+            text-decoration: none;
+            color: #2d6cdf;
+            font-size: 13px;
+        }
+
+        .back a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
+
 <body>
 
-<h2>Edit Document</h2>
+<div class="container">
 
-<form method="POST">
+    <div class="card-header">
+        <h2>✏ Edit Document</h2>
+        <span class="badge">ID: <?= $row['id'] ?></span>
+    </div>
 
-    <label>Document Type:</label><br>
-    <input type="text" name="document_type" 
-           value="<?= $row['document_type'] ?>" required>
-    <br><br>
+    <form method="POST">
 
-    <label>File Name:</label><br>
-    <input type="text" name="file_name" 
-           value="<?= $row['file_name'] ?>" required>
-    <br><br>
+        <label>Document Type</label>
+        <input type="text" name="document_type"
+               value="<?= $row['document_type'] ?>" required>
 
-    <button type="submit" name="update">Update</button>
+        <label>File Name</label>
+        <input type="text" name="file_name"
+               value="<?= $row['file_name'] ?>" required>
 
-</form>
+        <button type="submit" name="update">Update Document</button>
+
+    </form>
+
+    <div class="back">
+        <a href="view_documents.php">← Back to Documents</a>
+    </div>
+
+</div>
 
 </body>
 </html>
