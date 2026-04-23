@@ -8,7 +8,6 @@ $db   = "cenro";
 $conn = new mysqli($host, $user, $pass, $db);
 if ($conn->connect_error) die("Connection failed: " . $conn->connect_error);
 
-// Folder to store images
 $image_folder = "assets/image/employee/";
 if (!file_exists($image_folder)) {
     mkdir($image_folder, 0777, true);
@@ -118,7 +117,7 @@ if (isset($_POST['update'])) {
     $stmt->execute();
 }
 
-/* ================= PAGINATION + FILTER ================= */
+/* ================= PAGINATION ================= */
 $limit = 10;
 
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
@@ -126,18 +125,15 @@ if ($page < 1) $page = 1;
 
 $offset = ($page - 1) * $limit;
 
-// WHERE filter
 $where = "";
 if ($statusFilter == "Permanent" || $statusFilter == "Contract of Service") {
     $where = "WHERE status = '" . $conn->real_escape_string($statusFilter) . "'";
 }
 
-// total rows
 $totalResult = $conn->query("SELECT COUNT(*) as total FROM employees $where");
 $totalRow = $totalResult->fetch_assoc();
 $totalPages = ceil($totalRow['total'] / $limit);
 
-// fetch data
 $result = $conn->query("
     SELECT * FROM employees 
     $where
@@ -158,6 +154,7 @@ if (isset($_GET['edit'])) {
 <html>
 <head>
 <title>Employee CRUD</title>
+
 <style>
 body { font-family: Arial; background:#f4f6f9; padding:20px; }
 .container { max-width:900px; margin:auto; background:white; padding:20px; border-radius:10px; }
@@ -173,9 +170,9 @@ button {
     border-radius:6px;
 }
 
-button:hover { background:#3a8be0; }
-
-.reset-btn { width:45px; font-size:18px; }
+.reset-btn {
+    width:50px;
+}
 
 table { width:100%; margin-top:20px; border-collapse:collapse; }
 th, td { padding:10px; border-bottom:1px solid #ddd; text-align:center; }
@@ -185,11 +182,7 @@ th, td { padding:10px; border-bottom:1px solid #ddd; text-align:center; }
 
 img { width:50px; height:50px; object-fit:cover; border-radius:50%; }
 
-.pagination {
-    margin-top:20px;
-    text-align:center;
-}
-
+.pagination { margin-top:20px; text-align:center; }
 .pagination a {
     margin:0 5px;
     padding:5px 10px;
@@ -197,12 +190,9 @@ img { width:50px; height:50px; object-fit:cover; border-radius:50%; }
     text-decoration:none;
     border-radius:5px;
 }
-
-.pagination a.active {
-    background:#4facfe;
-    color:white;
-}
+.pagination a.active { background:#4facfe; color:white; }
 </style>
+
 </head>
 <body>
 
@@ -210,7 +200,7 @@ img { width:50px; height:50px; object-fit:cover; border-radius:50%; }
 
 <h2>Employee Management</h2>
 
-<!-- ================= FORM ================= -->
+<!-- FORM -->
 <form method="POST" enctype="multipart/form-data">
 
 <input type="hidden" name="id" value="<?= $edit ? $editData['employee_id'] : '' ?>">
@@ -220,8 +210,8 @@ img { width:50px; height:50px; object-fit:cover; border-radius:50%; }
 
 <select name="status" required>
 <option value="">Select Status</option>
-<option value="Permanent" <?= ($edit && $editData['status']=="Permanent") ? "selected" : "" ?>>Permanent</option>
-<option value="Contract of Service" <?= ($edit && $editData['status']=="Contract of Service") ? "selected" : "" ?>>Contract of Service</option>
+<option value="Permanent" <?= ($edit && $editData['status']=="Permanent")?"selected":"" ?>>Permanent</option>
+<option value="Contract of Service" <?= ($edit && $editData['status']=="Contract of Service")?"selected":"" ?>>Contract of Service</option>
 </select>
 
 <input type="text" name="gender" placeholder="Gender" value="<?= $edit ? $editData['gender'] : '' ?>">
@@ -242,20 +232,22 @@ img { width:50px; height:50px; object-fit:cover; border-radius:50%; }
 <button name="add">Add</button>
 <?php endif; ?>
 
+<!-- RESET ONLY INPUT FIELDS -->
+<button type="button" class="reset-btn" onclick="resetForm()">🔄</button>
+
 </form>
 
-<!-- ================= FILTER ================= -->
+<!-- FILTER -->
 <form method="GET" style="margin-top:15px;">
-    <label><b>Filter Status:</b></label>
-    <select name="status" onchange="this.form.submit()">
-        <option value="">All</option>
-        <option value="Permanent" <?= ($statusFilter=="Permanent")?"selected":"" ?>>Permanent</option>
-        <option value="Contract of Service" <?= ($statusFilter=="Contract of Service")?"selected":"" ?>>Contract of Service</option>
-    </select>
-    <input type="hidden" name="page" value="1">
+<select name="status" onchange="this.form.submit()">
+<option value="">All</option>
+<option value="Permanent" <?= ($statusFilter=="Permanent")?"selected":"" ?>>Permanent</option>
+<option value="Contract of Service" <?= ($statusFilter=="Contract of Service")?"selected":"" ?>>Contract of Service</option>
+</select>
+<input type="hidden" name="page" value="1">
 </form>
 
-<!-- ================= TABLE ================= -->
+<!-- TABLE -->
 <table>
 <tr>
 <th>ID</th>
@@ -292,7 +284,7 @@ img { width:50px; height:50px; object-fit:cover; border-radius:50%; }
 
 </table>
 
-<!-- ================= PAGINATION ================= -->
+<!-- PAGINATION -->
 <div class="pagination">
 
 <?php if ($page > 1): ?>
@@ -312,6 +304,17 @@ img { width:50px; height:50px; object-fit:cover; border-radius:50%; }
 </div>
 
 </div>
+
+<!-- RESET SCRIPT -->
+<script>
+function resetForm() {
+    const form = document.querySelector("form");
+    form.reset();
+
+    const file = form.querySelector('input[type="file"]');
+    if (file) file.value = "";
+}
+</script>
 
 </body>
 </html>
