@@ -68,7 +68,7 @@
         <ul>
             <li>Dashboard</li>
             <li><a href="employee_list.php">Employees</a></li>
-            <li>Reports</li>
+            <li>Documents</li>
             <li>Projects</li>
             <li>Settings</li>
             <li><a href="#" id="logoutBtn">Logout</a></li>
@@ -155,4 +155,4 @@ window.addEventListener("click", function(e) {
 </script>
 
 </body>
-</html>
+</html> 

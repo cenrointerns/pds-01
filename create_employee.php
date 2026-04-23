@@ -14,11 +14,13 @@ if (!file_exists($image_folder)) {
     mkdir($image_folder, 0777, true);
 }
 
+/* ================= FILTER ================= */
+$statusFilter = isset($_GET['status']) ? $_GET['status'] : "";
+
 /* ================= CREATE ================= */
 if (isset($_POST['add'])) {
 
     $name = $_POST['name'];
-    $age = $_POST['age'];
     $status = $_POST['status'];
 
     $gender = $_POST['gender'];
@@ -32,22 +34,22 @@ if (isset($_POST['add'])) {
     $appointment = $_POST['date_of_appointment'];
 
     $image_name = null;
-    if (isset($_FILES['image']) && $_FILES['image']['name'] != '') {
+    if (!empty($_FILES['image']['name'])) {
         $ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
         $image_name = uniqid() . "." . $ext;
         move_uploaded_file($_FILES['image']['tmp_name'], $image_folder . $image_name);
     }
 
     $stmt = $conn->prepare("INSERT INTO employees 
-    (name, age, status, image,
+    (name, status, image,
      gender, date_of_birth, nosca_item_number, place_of_assignment,
      position_title, salary_grade, civil_service_eligibility,
      education, date_of_appointment)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
     $stmt->bind_param(
-        "sisssssssssss",
-        $name, $age, $status, $image_name,
+        "ssssssssssss",
+        $name, $status, $image_name,
         $gender, $dob, $nosca, $assignment,
         $position, $salary, $civil,
         $education, $appointment
@@ -58,10 +60,10 @@ if (isset($_POST['add'])) {
 
 /* ================= DELETE ================= */
 if (isset($_GET['delete'])) {
-    $id = $_GET['delete'];
+    $id = (int)$_GET['delete'];
 
     $img = $conn->query("SELECT image FROM employees WHERE employee_id=$id")->fetch_assoc();
-    if ($img['image'] && file_exists($image_folder . $img['image'])) {
+    if (!empty($img['image']) && file_exists($image_folder . $img['image'])) {
         unlink($image_folder . $img['image']);
     }
 
@@ -73,7 +75,6 @@ if (isset($_POST['update'])) {
 
     $id = $_POST['id'];
     $name = $_POST['name'];
-    $age = $_POST['age'];
     $status = $_POST['status'];
 
     $gender = $_POST['gender'];
@@ -88,7 +89,7 @@ if (isset($_POST['update'])) {
 
     $image_name = $_POST['old_image'];
 
-    if (isset($_FILES['image']) && $_FILES['image']['name'] != '') {
+    if (!empty($_FILES['image']['name'])) {
         if ($image_name && file_exists($image_folder . $image_name)) {
             unlink($image_folder . $image_name);
         }
@@ -99,15 +100,15 @@ if (isset($_POST['update'])) {
     }
 
     $stmt = $conn->prepare("UPDATE employees SET 
-        name=?, age=?, status=?, image=?,
+        name=?, status=?, image=?,
         gender=?, date_of_birth=?, nosca_item_number=?, place_of_assignment=?,
         position_title=?, salary_grade=?, civil_service_eligibility=?,
         education=?, date_of_appointment=?
         WHERE employee_id=?");
 
     $stmt->bind_param(
-        "sisssssssssssi",
-        $name, $age, $status, $image_name,
+        "ssssssssssssi",
+        $name, $status, $image_name,
         $gender, $dob, $nosca, $assignment,
         $position, $salary, $civil,
         $education, $appointment,
@@ -117,13 +118,37 @@ if (isset($_POST['update'])) {
     $stmt->execute();
 }
 
-/* ================= FETCH ================= */
-$result = $conn->query("SELECT * FROM employees");
+/* ================= PAGINATION + FILTER ================= */
+$limit = 10;
+
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+if ($page < 1) $page = 1;
+
+$offset = ($page - 1) * $limit;
+
+// WHERE filter
+$where = "";
+if ($statusFilter == "Permanent" || $statusFilter == "Contract of Service") {
+    $where = "WHERE status = '" . $conn->real_escape_string($statusFilter) . "'";
+}
+
+// total rows
+$totalResult = $conn->query("SELECT COUNT(*) as total FROM employees $where");
+$totalRow = $totalResult->fetch_assoc();
+$totalPages = ceil($totalRow['total'] / $limit);
+
+// fetch data
+$result = $conn->query("
+    SELECT * FROM employees 
+    $where
+    ORDER BY employee_id DESC 
+    LIMIT $limit OFFSET $offset
+");
 
 /* ================= EDIT ================= */
 $edit = false;
 if (isset($_GET['edit'])) {
-    $id = $_GET['edit'];
+    $id = (int)$_GET['edit'];
     $editData = $conn->query("SELECT * FROM employees WHERE employee_id=$id")->fetch_assoc();
     $edit = true;
 }
@@ -136,28 +161,62 @@ if (isset($_GET['edit'])) {
 <style>
 body { font-family: Arial; background:#f4f6f9; padding:20px; }
 .container { max-width:900px; margin:auto; background:white; padding:20px; border-radius:10px; }
+
 input, select { padding:8px; margin:5px; width:100%; }
-button { padding:10px; background:#4facfe; color:white; border:none; cursor:pointer; }
+
+button {
+    padding:10px;
+    background:#4facfe;
+    color:white;
+    border:none;
+    cursor:pointer;
+    border-radius:6px;
+}
+
+button:hover { background:#3a8be0; }
+
+.reset-btn { width:45px; font-size:18px; }
+
 table { width:100%; margin-top:20px; border-collapse:collapse; }
 th, td { padding:10px; border-bottom:1px solid #ddd; text-align:center; }
+
 .permanent { color:green; font-weight:bold; }
 .cos { color:orange; font-weight:bold; }
-a { margin:0 5px; text-decoration:none; }
+
 img { width:50px; height:50px; object-fit:cover; border-radius:50%; }
+
+.pagination {
+    margin-top:20px;
+    text-align:center;
+}
+
+.pagination a {
+    margin:0 5px;
+    padding:5px 10px;
+    border:1px solid #ccc;
+    text-decoration:none;
+    border-radius:5px;
+}
+
+.pagination a.active {
+    background:#4facfe;
+    color:white;
+}
 </style>
 </head>
 <body>
 
 <div class="container">
+
 <h2>Employee Management</h2>
 
+<!-- ================= FORM ================= -->
 <form method="POST" enctype="multipart/form-data">
 
 <input type="hidden" name="id" value="<?= $edit ? $editData['employee_id'] : '' ?>">
 <input type="hidden" name="old_image" value="<?= $edit ? $editData['image'] : '' ?>">
 
 <input type="text" name="name" placeholder="Name" required value="<?= $edit ? $editData['name'] : '' ?>">
-<input type="number" name="age" placeholder="Age" required value="<?= $edit ? $editData['age'] : '' ?>">
 
 <select name="status" required>
 <option value="">Select Status</option>
@@ -166,37 +225,42 @@ img { width:50px; height:50px; object-fit:cover; border-radius:50%; }
 </select>
 
 <input type="text" name="gender" placeholder="Gender" value="<?= $edit ? $editData['gender'] : '' ?>">
-
-<!-- 5TH FIELD -->
 <input type="date" name="date_of_birth" value="<?= $edit ? $editData['date_of_birth'] : '' ?>">
-
 <input type="text" name="nosca_item_number" placeholder="NOSCA Item Number" value="<?= $edit ? $editData['nosca_item_number'] : '' ?>">
 <input type="text" name="place_of_assignment" placeholder="Place of Assignment" value="<?= $edit ? $editData['place_of_assignment'] : '' ?>">
 <input type="text" name="position_title" placeholder="Position Title" value="<?= $edit ? $editData['position_title'] : '' ?>">
 <input type="text" name="salary_grade" placeholder="Salary Grade" value="<?= $edit ? $editData['salary_grade'] : '' ?>">
-<input type="text" name="civil_service_eligibility" placeholder="Civil Service Eligibility" value="<?= $edit ? $editData['civil_service_eligibility'] : '' ?>">
+<input type="text" name="civil_service_eligibility" placeholder="Eligibility" value="<?= $edit ? $editData['civil_service_eligibility'] : '' ?>">
 <input type="text" name="education" placeholder="Education" value="<?= $edit ? $editData['education'] : '' ?>">
-
-<!-- LAST FIELD -->
 <input type="date" name="date_of_appointment" value="<?= $edit ? $editData['date_of_appointment'] : '' ?>">
 
-<label>Employee Image:</label>
 <input type="file" name="image">
 
 <?php if ($edit): ?>
-<button type="submit" name="update">Update Employee</button>
+<button name="update">Update</button>
 <?php else: ?>
-<button type="submit" name="add">Add Employee</button>
+<button name="add">Add</button>
 <?php endif; ?>
 
 </form>
 
+<!-- ================= FILTER ================= -->
+<form method="GET" style="margin-top:15px;">
+    <label><b>Filter Status:</b></label>
+    <select name="status" onchange="this.form.submit()">
+        <option value="">All</option>
+        <option value="Permanent" <?= ($statusFilter=="Permanent")?"selected":"" ?>>Permanent</option>
+        <option value="Contract of Service" <?= ($statusFilter=="Contract of Service")?"selected":"" ?>>Contract of Service</option>
+    </select>
+    <input type="hidden" name="page" value="1">
+</form>
+
+<!-- ================= TABLE ================= -->
 <table>
 <tr>
 <th>ID</th>
 <th>Image</th>
 <th>Name</th>
-<th>Age</th>
 <th>Status</th>
 <th>Actions</th>
 </tr>
@@ -214,20 +278,38 @@ img { width:50px; height:50px; object-fit:cover; border-radius:50%; }
 </td>
 
 <td><?= htmlspecialchars($row['name']) ?></td>
-<td><?= $row['age'] ?></td>
 
-<td class="<?= strtolower($row['status']) == 'permanent' ? 'permanent' : 'cos' ?>">
+<td class="<?= strtolower($row['status'])=='permanent'?'permanent':'cos' ?>">
 <?= $row['status'] ?>
 </td>
 
 <td>
-<a href="?edit=<?= $row['employee_id'] ?>">Edit</a>
-<a href="?delete=<?= $row['employee_id'] ?>" onclick="return confirm('Delete?')">Delete</a>
+<a href="?edit=<?= $row['employee_id'] ?>&page=<?= $page ?>&status=<?= $statusFilter ?>">Edit</a>
+<a href="?delete=<?= $row['employee_id'] ?>&page=<?= $page ?>&status=<?= $statusFilter ?>" onclick="return confirm('Delete?')">Delete</a>
 </td>
 </tr>
 <?php endwhile; ?>
 
 </table>
+
+<!-- ================= PAGINATION ================= -->
+<div class="pagination">
+
+<?php if ($page > 1): ?>
+<a href="?page=<?= $page-1 ?>&status=<?= $statusFilter ?>">Prev</a>
+<?php endif; ?>
+
+<?php for ($i=1; $i<=$totalPages; $i++): ?>
+<a href="?page=<?= $i ?>&status=<?= $statusFilter ?>" class="<?= ($i==$page)?'active':'' ?>">
+<?= $i ?>
+</a>
+<?php endfor; ?>
+
+<?php if ($page < $totalPages): ?>
+<a href="?page=<?= $page+1 ?>&status=<?= $statusFilter ?>">Next</a>
+<?php endif; ?>
+
+</div>
 
 </div>
 
