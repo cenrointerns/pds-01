@@ -68,7 +68,7 @@
         <ul>
             <li>Dashboard</li>
             <li><a href="employee_list.php">Employees</a></li>
-            <li>Documents</li>
+            <li><a href="view_documents.php">Documents</a></li>
             <li>Projects</li>
             <li>Settings</li>
             <li><a href="#" id="logoutBtn">Logout</a></li>
