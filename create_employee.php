@@ -14,13 +14,12 @@ if (!file_exists($image_folder)) {
     mkdir($image_folder, 0777, true);
 }
 
-// ================= CREATE =================
+/* ================= CREATE ================= */
 if (isset($_POST['add'])) {
 
     $name = $_POST['name'];
     $age = $_POST['age'];
     $status = $_POST['status'];
-    $office = $_POST['office'];
 
     // NEW FIELDS
     $gender = $_POST['gender'];
@@ -36,45 +35,49 @@ if (isset($_POST['add'])) {
 
     // Image upload
     $image_name = null;
-    if(isset($_FILES['image']) && $_FILES['image']['name'] != '') {
+    if (isset($_FILES['image']) && $_FILES['image']['name'] != '') {
         $ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
         $image_name = uniqid() . "." . $ext;
         move_uploaded_file($_FILES['image']['tmp_name'], $image_folder . $image_name);
     }
 
     $stmt = $conn->prepare("INSERT INTO employees 
-    (name, age, status, office, image, gender, date_of_birth, nosca_item_number, place_of_assignment, position_title, salary_grade, civil_service_eligibility, education, date_of_appointment, length_of_service)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    (name, age, status, image,
+     gender, date_of_birth, nosca_item_number, place_of_assignment,
+     position_title, salary_grade, civil_service_eligibility,
+     education, date_of_appointment, length_of_service)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-    $stmt->bind_param("sisssssssssssss",
-        $name, $age, $status, $office, $image_name,
-        $gender, $dob, $nosca, $assignment, $position,
-        $salary, $civil, $education, $appointment, $service
+    $stmt->bind_param(
+        "sissssssssssss",
+        $name, $age, $status, $image_name,
+        $gender, $dob, $nosca, $assignment,
+        $position, $salary, $civil,
+        $education, $appointment, $service
     );
 
     $stmt->execute();
 }
 
-// ================= DELETE =================
+/* ================= DELETE ================= */
 if (isset($_GET['delete'])) {
     $id = $_GET['delete'];
 
     $img = $conn->query("SELECT image FROM employees WHERE employee_id=$id")->fetch_assoc();
-    if($img['image'] && file_exists($image_folder.$img['image'])) {
-        unlink($image_folder.$img['image']);
+    if ($img['image'] && file_exists($image_folder . $img['image'])) {
+        unlink($image_folder . $img['image']);
     }
 
     $conn->query("DELETE FROM employees WHERE employee_id=$id");
 }
 
-// ================= UPDATE =================
+/* ================= UPDATE ================= */
 if (isset($_POST['update'])) {
 
     $id = $_POST['id'];
     $name = $_POST['name'];
     $age = $_POST['age'];
     $status = $_POST['status'];
-    $office = $_POST['office'];
 
     // NEW FIELDS
     $gender = $_POST['gender'];
@@ -90,9 +93,9 @@ if (isset($_POST['update'])) {
 
     $image_name = $_POST['old_image'];
 
-    if(isset($_FILES['image']) && $_FILES['image']['name'] != '') {
-        if($image_name && file_exists($image_folder.$image_name)) {
-            unlink($image_folder.$image_name);
+    if (isset($_FILES['image']) && $_FILES['image']['name'] != '') {
+        if ($image_name && file_exists($image_folder . $image_name)) {
+            unlink($image_folder . $image_name);
         }
 
         $ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
@@ -101,14 +104,15 @@ if (isset($_POST['update'])) {
     }
 
     $stmt = $conn->prepare("UPDATE employees SET 
-        name=?, age=?, status=?, office=?, image=?,
+        name=?, age=?, status=?, image=?,
         gender=?, date_of_birth=?, nosca_item_number=?, place_of_assignment=?,
         position_title=?, salary_grade=?, civil_service_eligibility=?,
         education=?, date_of_appointment=?, length_of_service=?
         WHERE employee_id=?");
 
-    $stmt->bind_param("sisssssssssssssi",
-        $name, $age, $status, $office, $image_name,
+    $stmt->bind_param(
+        "sissssssssssssi",
+        $name, $age, $status, $image_name,
         $gender, $dob, $nosca, $assignment,
         $position, $salary, $civil,
         $education, $appointment, $service,
@@ -118,10 +122,10 @@ if (isset($_POST['update'])) {
     $stmt->execute();
 }
 
-// FETCH DATA
+/* ================= FETCH ================= */
 $result = $conn->query("SELECT * FROM employees");
 
-// EDIT MODE
+/* ================= EDIT ================= */
 $edit = false;
 if (isset($_GET['edit'])) {
     $id = $_GET['edit'];
@@ -166,7 +170,7 @@ img { width:50px; height:50px; object-fit:cover; border-radius:50%; }
 <option value="Contract of Service" <?= ($edit && $editData['status']=="Contract of Service") ? "selected" : "" ?>>Contract of Service</option>
 </select>
 
-<input type="text" name="office" placeholder="Office" required value="<?= $edit ? $editData['office'] : '' ?>">
+<!-- REMOVED OFFICE FIELD -->
 
 <!-- NEW FIELDS -->
 <input type="text" name="gender" placeholder="Gender" value="<?= $edit ? $editData['gender'] : '' ?>">
@@ -198,13 +202,13 @@ img { width:50px; height:50px; object-fit:cover; border-radius:50%; }
 <th>Name</th>
 <th>Age</th>
 <th>Status</th>
-<th>Office</th>
 <th>Actions</th>
 </tr>
 
 <?php while($row = $result->fetch_assoc()): ?>
 <tr>
 <td><?= $row['employee_id'] ?></td>
+
 <td>
 <?php if($row['image'] && file_exists($image_folder.$row['image'])): ?>
 <img src="<?= $image_folder.$row['image'] ?>">
@@ -212,16 +216,17 @@ img { width:50px; height:50px; object-fit:cover; border-radius:50%; }
 <img src="<?= $image_folder ?>default.png">
 <?php endif; ?>
 </td>
+
 <td><?= htmlspecialchars($row['name']) ?></td>
 <td><?= $row['age'] ?></td>
+
 <td class="<?= strtolower($row['status']) == 'permanent' ? 'permanent' : 'cos' ?>">
 <?= $row['status'] ?>
 </td>
-<td><?= htmlspecialchars($row['office']) ?></td>
+
 <td>
 <a href="?edit=<?= $row['employee_id'] ?>">Edit</a>
 <a href="?delete=<?= $row['employee_id'] ?>" onclick="return confirm('Delete?')">Delete</a>
-<a href="employee_view.php?employee_id=<?= $row['employee_id'] ?>">View</a>
 </td>
 </tr>
 <?php endwhile; ?>
