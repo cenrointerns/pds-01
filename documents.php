@@ -5,6 +5,7 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
+$selected_filter = $_GET['filter'] ?? 'ALL';
 $sections = ["PDS", "IPC", "OPC", "SALN"];
 ?>
 
@@ -21,6 +22,18 @@ $sections = ["PDS", "IPC", "OPC", "SALN"];
       justify-content:space-between;
       align-items:center;
       margin-bottom:20px;
+    }
+
+    form {
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+
+    select {
+      padding:8px;
+      border-radius:6px;
+      border:1px solid #ccc;
     }
 
     button {
@@ -74,12 +87,30 @@ $sections = ["PDS", "IPC", "OPC", "SALN"];
   <div class="header">
     <h2>📁 Employee Documents</h2>
 
-    <button onclick="window.location.href='upload_form.php'">
-      + Upload Document
-    </button>
+    <!-- FILTER + BUTTON -->
+    <form method="GET">
+      <select name="filter" onchange="this.form.submit()">
+        <option value="ALL" <?= $selected_filter == 'ALL' ? 'selected' : '' ?>>All</option>
+        <option value="PDS" <?= $selected_filter == 'PDS' ? 'selected' : '' ?>>PDS</option>
+        <option value="IPC" <?= $selected_filter == 'IPC' ? 'selected' : '' ?>>IPC</option>
+        <option value="OPC" <?= $selected_filter == 'OPC' ? 'selected' : '' ?>>OPC</option>
+        <option value="SALN" <?= $selected_filter == 'SALN' ? 'selected' : '' ?>>SALN</option>
+      </select>
+
+      <button type="button" onclick="window.location.href='upload_form.php'">
+        + Upload Document
+      </button>
+    </form>
   </div>
 
-  <?php foreach ($sections as $section) { ?>
+  <?php foreach ($sections as $section) { 
+
+      // FILTER LOGIC
+      if ($selected_filter != 'ALL' && $selected_filter != $section) {
+          continue;
+      }
+
+  ?>
 
     <div class="section">
 
@@ -111,8 +142,8 @@ $sections = ["PDS", "IPC", "OPC", "SALN"];
         while ($row = $result->fetch_assoc()) {
         ?>
           <tr>
-            <td><?= $row["employee_id"] ?></td>
-            <td><?= $row["file_name"] ?></td>
+            <td><?= htmlspecialchars($row["employee_id"]) ?></td>
+            <td><?= htmlspecialchars($row["file_name"]) ?></td>
             <td><?= $row["uploaded_at"] ?></td>
             <td>
               <a href="<?= $row["file_path"] ?>" target="_blank">View</a>
