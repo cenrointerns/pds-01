@@ -16,12 +16,25 @@ if (!file_exists($image_folder)) {
 
 // ================= CREATE =================
 if (isset($_POST['add'])) {
+
     $name = $_POST['name'];
     $age = $_POST['age'];
     $status = $_POST['status'];
     $office = $_POST['office'];
 
-    // Handle image upload
+    // NEW FIELDS
+    $gender = $_POST['gender'];
+    $dob = $_POST['date_of_birth'];
+    $nosca = $_POST['nosca_item_number'];
+    $assignment = $_POST['place_of_assignment'];
+    $position = $_POST['position_title'];
+    $salary = $_POST['salary_grade'];
+    $civil = $_POST['civil_service_eligibility'];
+    $education = $_POST['education'];
+    $appointment = $_POST['date_of_appointment'];
+    $service = $_POST['length_of_service'];
+
+    // Image upload
     $image_name = null;
     if(isset($_FILES['image']) && $_FILES['image']['name'] != '') {
         $ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
@@ -29,8 +42,16 @@ if (isset($_POST['add'])) {
         move_uploaded_file($_FILES['image']['tmp_name'], $image_folder . $image_name);
     }
 
-    $stmt = $conn->prepare("INSERT INTO employees (name, age, status, office, image) VALUES (?, ?, ?, ?, ?)");
-    $stmt->bind_param("sisss", $name, $age, $status, $office, $image_name);
+    $stmt = $conn->prepare("INSERT INTO employees 
+    (name, age, status, office, image, gender, date_of_birth, nosca_item_number, place_of_assignment, position_title, salary_grade, civil_service_eligibility, education, date_of_appointment, length_of_service)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+
+    $stmt->bind_param("sisssssssssssss",
+        $name, $age, $status, $office, $image_name,
+        $gender, $dob, $nosca, $assignment, $position,
+        $salary, $civil, $education, $appointment, $service
+    );
+
     $stmt->execute();
 }
 
@@ -38,33 +59,62 @@ if (isset($_POST['add'])) {
 if (isset($_GET['delete'])) {
     $id = $_GET['delete'];
 
-    // Delete image file
     $img = $conn->query("SELECT image FROM employees WHERE employee_id=$id")->fetch_assoc();
-    if($img['image'] && file_exists($image_folder.$img['image'])) unlink($image_folder.$img['image']);
+    if($img['image'] && file_exists($image_folder.$img['image'])) {
+        unlink($image_folder.$img['image']);
+    }
 
     $conn->query("DELETE FROM employees WHERE employee_id=$id");
 }
 
 // ================= UPDATE =================
 if (isset($_POST['update'])) {
+
     $id = $_POST['id'];
     $name = $_POST['name'];
     $age = $_POST['age'];
     $status = $_POST['status'];
     $office = $_POST['office'];
 
-    $image_name = $_POST['old_image']; // Keep old image by default
+    // NEW FIELDS
+    $gender = $_POST['gender'];
+    $dob = $_POST['date_of_birth'];
+    $nosca = $_POST['nosca_item_number'];
+    $assignment = $_POST['place_of_assignment'];
+    $position = $_POST['position_title'];
+    $salary = $_POST['salary_grade'];
+    $civil = $_POST['civil_service_eligibility'];
+    $education = $_POST['education'];
+    $appointment = $_POST['date_of_appointment'];
+    $service = $_POST['length_of_service'];
+
+    $image_name = $_POST['old_image'];
+
     if(isset($_FILES['image']) && $_FILES['image']['name'] != '') {
-        // Delete old image
-        if($image_name && file_exists($image_folder.$image_name)) unlink($image_folder.$image_name);
+        if($image_name && file_exists($image_folder.$image_name)) {
+            unlink($image_folder.$image_name);
+        }
 
         $ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
         $image_name = uniqid() . "." . $ext;
         move_uploaded_file($_FILES['image']['tmp_name'], $image_folder . $image_name);
     }
 
-    $stmt = $conn->prepare("UPDATE employees SET name=?, age=?, status=?, office=?, image=? WHERE employee_id=?");
-    $stmt->bind_param("sisssi", $name, $age, $status, $office, $image_name, $id);
+    $stmt = $conn->prepare("UPDATE employees SET 
+        name=?, age=?, status=?, office=?, image=?,
+        gender=?, date_of_birth=?, nosca_item_number=?, place_of_assignment=?,
+        position_title=?, salary_grade=?, civil_service_eligibility=?,
+        education=?, date_of_appointment=?, length_of_service=?
+        WHERE employee_id=?");
+
+    $stmt->bind_param("sisssssssssssssi",
+        $name, $age, $status, $office, $image_name,
+        $gender, $dob, $nosca, $assignment,
+        $position, $salary, $civil,
+        $education, $appointment, $service,
+        $id
+    );
+
     $stmt->execute();
 }
 
@@ -83,90 +133,100 @@ if (isset($_GET['edit'])) {
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Employee CRUD</title>
-    <style>
-        body { font-family: Arial; background:#f4f6f9; padding:20px; }
-        .container { max-width:900px; margin:auto; background:white; padding:20px; border-radius:10px; }
-        input, select { padding:8px; margin:5px; width:100%; }
-        button { padding:10px; background:#4facfe; color:white; border:none; cursor:pointer; }
-        table { width:100%; margin-top:20px; border-collapse:collapse; }
-        th, td { padding:10px; border-bottom:1px solid #ddd; text-align:center; }
-        .permanent { color:green; font-weight:bold; }
-        .cos { color:orange; font-weight:bold; }
-        a { margin:0 5px; text-decoration:none; }
-        img { width:50px; height:50px; object-fit:cover; border-radius:50%; }
-    </style>
+<title>Employee CRUD</title>
+<style>
+body { font-family: Arial; background:#f4f6f9; padding:20px; }
+.container { max-width:900px; margin:auto; background:white; padding:20px; border-radius:10px; }
+input, select { padding:8px; margin:5px; width:100%; }
+button { padding:10px; background:#4facfe; color:white; border:none; cursor:pointer; }
+table { width:100%; margin-top:20px; border-collapse:collapse; }
+th, td { padding:10px; border-bottom:1px solid #ddd; text-align:center; }
+.permanent { color:green; font-weight:bold; }
+.cos { color:orange; font-weight:bold; }
+a { margin:0 5px; text-decoration:none; }
+img { width:50px; height:50px; object-fit:cover; border-radius:50%; }
+</style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Employee Management</h2>
+<h2>Employee Management</h2>
 
-    <!-- FORM -->
-    <form method="POST" enctype="multipart/form-data">
-        <input type="hidden" name="id" value="<?= $edit ? $editData['employee_id'] : '' ?>">
-        <input type="hidden" name="old_image" value="<?= $edit ? $editData['image'] : '' ?>">
+<form method="POST" enctype="multipart/form-data">
 
-        <input type="text" name="name" placeholder="Name" required
-            value="<?= $edit ? $editData['name'] : '' ?>">
+<input type="hidden" name="id" value="<?= $edit ? $editData['employee_id'] : '' ?>">
+<input type="hidden" name="old_image" value="<?= $edit ? $editData['image'] : '' ?>">
 
-        <input type="number" name="age" placeholder="Age" required
-            value="<?= $edit ? $editData['age'] : '' ?>">
+<input type="text" name="name" placeholder="Name" required value="<?= $edit ? $editData['name'] : '' ?>">
+<input type="number" name="age" placeholder="Age" required value="<?= $edit ? $editData['age'] : '' ?>">
 
-        <select name="status" required>
-            <option value="">Select Status</option>
-            <option value="Permanent" <?= ($edit && $editData['status']=="Permanent") ? "selected" : "" ?>>Permanent</option>
-            <option value="Contract of Service" <?= ($edit && $editData['status']=="Contract of Service") ? "selected" : "" ?>>Contract of Service</option>
-        </select>
+<select name="status" required>
+<option value="">Select Status</option>
+<option value="Permanent" <?= ($edit && $editData['status']=="Permanent") ? "selected" : "" ?>>Permanent</option>
+<option value="Contract of Service" <?= ($edit && $editData['status']=="Contract of Service") ? "selected" : "" ?>>Contract of Service</option>
+</select>
 
-        <input type="text" name="office" placeholder="Office" required
-            value="<?= $edit ? $editData['office'] : '' ?>">
+<input type="text" name="office" placeholder="Office" required value="<?= $edit ? $editData['office'] : '' ?>">
 
-        <label>Employee Image:</label>
-        <input type="file" name="image" accept="image/*">
+<!-- NEW FIELDS -->
+<input type="text" name="gender" placeholder="Gender" value="<?= $edit ? $editData['gender'] : '' ?>">
+<input type="date" name="date_of_birth" value="<?= $edit ? $editData['date_of_birth'] : '' ?>">
+<input type="text" name="nosca_item_number" placeholder="NOSCA Item Number" value="<?= $edit ? $editData['nosca_item_number'] : '' ?>">
+<input type="text" name="place_of_assignment" placeholder="Place of Assignment" value="<?= $edit ? $editData['place_of_assignment'] : '' ?>">
+<input type="text" name="position_title" placeholder="Position Title" value="<?= $edit ? $editData['position_title'] : '' ?>">
+<input type="text" name="salary_grade" placeholder="Salary Grade" value="<?= $edit ? $editData['salary_grade'] : '' ?>">
+<input type="text" name="civil_service_eligibility" placeholder="Civil Service Eligibility" value="<?= $edit ? $editData['civil_service_eligibility'] : '' ?>">
+<input type="text" name="education" placeholder="Education" value="<?= $edit ? $editData['education'] : '' ?>">
+<input type="date" name="date_of_appointment" value="<?= $edit ? $editData['date_of_appointment'] : '' ?>">
+<input type="text" name="length_of_service" placeholder="Length of Service" value="<?= $edit ? $editData['length_of_service'] : '' ?>">
 
-        <?php if ($edit): ?>
-            <button type="submit" name="update">Update Employee</button>
-        <?php else: ?>
-            <button type="submit" name="add">Add Employee</button>
-        <?php endif; ?>
-    </form>
+<label>Employee Image:</label>
+<input type="file" name="image">
 
-    <!-- TABLE -->
-    <table>
-        <tr>
-            <th>ID</th>
-            <th>Image</th>
-            <th>Name</th>
-            <th>Age</th>
-            <th>Status</th>
-            <th>Office</th>
-            <th>Actions</th>
-        </tr>
+<?php if ($edit): ?>
+<button type="submit" name="update">Update Employee</button>
+<?php else: ?>
+<button type="submit" name="add">Add Employee</button>
+<?php endif; ?>
 
-        <?php while($row = $result->fetch_assoc()): ?>
-        <tr>
-            <td><?= $row['employee_id'] ?></td>
-            <td>
-                <?php if($row['image'] && file_exists($image_folder.$row['image'])): ?>
-                    <img src="<?= $image_folder.$row['image'] ?>" alt="<?= htmlspecialchars($row['name']) ?>">
-                <?php else: ?>
-                    <img src="<?= $image_folder ?>default.png" alt="Default Image">
-                <?php endif; ?>
-            </td>
-            <td><?= htmlspecialchars($row['name']) ?></td>
-            <td><?= $row['age'] ?></td>
-            <td class="<?= strtolower($row['status']) == 'permanent' ? 'permanent' : 'cos' ?>">
-                <?= $row['status'] ?>
-            </td>
-            <td><?= htmlspecialchars($row['office']) ?></td>
-            <td>
-                <a href="?edit=<?= $row['employee_id'] ?>">Edit</a>
-                <a href="?delete=<?= $row['employee_id'] ?>" onclick="return confirm('Delete this employee?')">Delete</a>
-            </td>
-        </tr>
-        <?php endwhile; ?>
-    </table>
+</form>
+
+<table>
+<tr>
+<th>ID</th>
+<th>Image</th>
+<th>Name</th>
+<th>Age</th>
+<th>Status</th>
+<th>Office</th>
+<th>Actions</th>
+</tr>
+
+<?php while($row = $result->fetch_assoc()): ?>
+<tr>
+<td><?= $row['employee_id'] ?></td>
+<td>
+<?php if($row['image'] && file_exists($image_folder.$row['image'])): ?>
+<img src="<?= $image_folder.$row['image'] ?>">
+<?php else: ?>
+<img src="<?= $image_folder ?>default.png">
+<?php endif; ?>
+</td>
+<td><?= htmlspecialchars($row['name']) ?></td>
+<td><?= $row['age'] ?></td>
+<td class="<?= strtolower($row['status']) == 'permanent' ? 'permanent' : 'cos' ?>">
+<?= $row['status'] ?>
+</td>
+<td><?= htmlspecialchars($row['office']) ?></td>
+<td>
+<a href="?edit=<?= $row['employee_id'] ?>">Edit</a>
+<a href="?delete=<?= $row['employee_id'] ?>" onclick="return confirm('Delete?')">Delete</a>
+<a href="employee_view.php?employee_id=<?= $row['employee_id'] ?>">View</a>
+</td>
+</tr>
+<?php endwhile; ?>
+
+</table>
 
 </div>
 
