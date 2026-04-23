@@ -45,7 +45,14 @@ $conn->close();
 <style>
 body {
     font-family: 'Segoe UI', Tahoma, sans-serif;
-    background: #f4f6f9;
+
+    /* 🔥 Background image */
+    background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Logo_of_the_Department_of_Environment_and_Natural_Resources.svg/1280px-Logo_of_the_Department_of_Environment_and_Natural_Resources.svg.png'); /* change path here */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+
     margin: 0;
     padding: 20px;
 }
