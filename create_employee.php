@@ -21,7 +21,6 @@ if (isset($_POST['add'])) {
     $age = $_POST['age'];
     $status = $_POST['status'];
 
-    // NEW FIELDS
     $gender = $_POST['gender'];
     $dob = $_POST['date_of_birth'];
     $nosca = $_POST['nosca_item_number'];
@@ -31,9 +30,7 @@ if (isset($_POST['add'])) {
     $civil = $_POST['civil_service_eligibility'];
     $education = $_POST['education'];
     $appointment = $_POST['date_of_appointment'];
-    $service = $_POST['length_of_service'];
 
-    // Image upload
     $image_name = null;
     if (isset($_FILES['image']) && $_FILES['image']['name'] != '') {
         $ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
@@ -45,15 +42,15 @@ if (isset($_POST['add'])) {
     (name, age, status, image,
      gender, date_of_birth, nosca_item_number, place_of_assignment,
      position_title, salary_grade, civil_service_eligibility,
-     education, date_of_appointment, length_of_service)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+     education, date_of_appointment)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
     $stmt->bind_param(
-        "sissssssssssss",
+        "sisssssssssss",
         $name, $age, $status, $image_name,
         $gender, $dob, $nosca, $assignment,
         $position, $salary, $civil,
-        $education, $appointment, $service
+        $education, $appointment
     );
 
     $stmt->execute();
@@ -79,7 +76,6 @@ if (isset($_POST['update'])) {
     $age = $_POST['age'];
     $status = $_POST['status'];
 
-    // NEW FIELDS
     $gender = $_POST['gender'];
     $dob = $_POST['date_of_birth'];
     $nosca = $_POST['nosca_item_number'];
@@ -89,7 +85,6 @@ if (isset($_POST['update'])) {
     $civil = $_POST['civil_service_eligibility'];
     $education = $_POST['education'];
     $appointment = $_POST['date_of_appointment'];
-    $service = $_POST['length_of_service'];
 
     $image_name = $_POST['old_image'];
 
@@ -107,15 +102,15 @@ if (isset($_POST['update'])) {
         name=?, age=?, status=?, image=?,
         gender=?, date_of_birth=?, nosca_item_number=?, place_of_assignment=?,
         position_title=?, salary_grade=?, civil_service_eligibility=?,
-        education=?, date_of_appointment=?, length_of_service=?
+        education=?, date_of_appointment=?
         WHERE employee_id=?");
 
     $stmt->bind_param(
-        "sissssssssssssi",
+        "sisssssssssssi",
         $name, $age, $status, $image_name,
         $gender, $dob, $nosca, $assignment,
         $position, $salary, $civil,
-        $education, $appointment, $service,
+        $education, $appointment,
         $id
     );
 
@@ -170,19 +165,20 @@ img { width:50px; height:50px; object-fit:cover; border-radius:50%; }
 <option value="Contract of Service" <?= ($edit && $editData['status']=="Contract of Service") ? "selected" : "" ?>>Contract of Service</option>
 </select>
 
-<!-- REMOVED OFFICE FIELD -->
-
-<!-- NEW FIELDS -->
 <input type="text" name="gender" placeholder="Gender" value="<?= $edit ? $editData['gender'] : '' ?>">
+
+<!-- 5TH FIELD -->
 <input type="date" name="date_of_birth" value="<?= $edit ? $editData['date_of_birth'] : '' ?>">
+
 <input type="text" name="nosca_item_number" placeholder="NOSCA Item Number" value="<?= $edit ? $editData['nosca_item_number'] : '' ?>">
 <input type="text" name="place_of_assignment" placeholder="Place of Assignment" value="<?= $edit ? $editData['place_of_assignment'] : '' ?>">
 <input type="text" name="position_title" placeholder="Position Title" value="<?= $edit ? $editData['position_title'] : '' ?>">
 <input type="text" name="salary_grade" placeholder="Salary Grade" value="<?= $edit ? $editData['salary_grade'] : '' ?>">
 <input type="text" name="civil_service_eligibility" placeholder="Civil Service Eligibility" value="<?= $edit ? $editData['civil_service_eligibility'] : '' ?>">
 <input type="text" name="education" placeholder="Education" value="<?= $edit ? $editData['education'] : '' ?>">
+
+<!-- LAST FIELD -->
 <input type="date" name="date_of_appointment" value="<?= $edit ? $editData['date_of_appointment'] : '' ?>">
-<input type="text" name="length_of_service" placeholder="Length of Service" value="<?= $edit ? $editData['length_of_service'] : '' ?>">
 
 <label>Employee Image:</label>
 <input type="file" name="image">
