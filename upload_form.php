@@ -5,7 +5,6 @@
 <head>
     <title>Upload Employee Document</title>
 
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
     <style>
@@ -26,7 +25,6 @@
 
         h2 {
             text-align: center;
-            margin-bottom: 10px;
             color: #2c3e50;
         }
 
@@ -42,7 +40,6 @@
             display: block;
             margin-top: 15px;
             margin-bottom: 5px;
-            color: #34495e;
         }
 
         select, input[type="file"] {
@@ -50,11 +47,6 @@
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 8px;
-            font-size: 14px;
-        }
-
-        select:focus, input[type="file"]:focus {
-            border-color: #3498db;
         }
 
         .btn {
@@ -67,7 +59,6 @@
             border-radius: 8px;
             font-size: 16px;
             cursor: pointer;
-            transition: 0.3s;
         }
 
         .btn:hover {
@@ -80,10 +71,6 @@
             margin-top: 15px;
             color: #3498db;
             text-decoration: none;
-        }
-
-        .back:hover {
-            text-decoration: underline;
         }
     </style>
 </head>
@@ -114,32 +101,30 @@
             ?>
         </select>
 
-        <!-- Document Type (UPDATED) -->
+        <!-- Document Type -->
         <label>Document Type</label>
         <select name="document_type" required>
             <option value="">-- Select Document Type --</option>
-
-            <option value="PDS">Personal Data Sheet (PDS)</option>
-            <option value="SALN">Statement of Assets, Liabilities and Net Worth (SALN)</option>
-            <option value="IPC">Individual Performance Commitment (IPC)</option>
-            <option value="OPC">Office Performance Commitment (OPC)</option>
-            <option value="IPCR">Individual Performance Commitment and Review (IPCR)</option>
-            <option value="OPCR">Office Performance Commitment and Review (OPCR)</option>
+            <option value="PDS">PDS</option>
+            <option value="SALN">SALN</option>
+            <option value="IPC">IPC</option>
+            <option value="OPC">OPC</option>
+            <option value="IPCR">IPCR</option>
+            <option value="OPCR">OPCR</option>
             <option value="Special Order">Special Order</option>
             <option value="Reporting for Duty">Reporting for Duty</option>
-            <option value="Memorandum">Memorandum Issued</option>
-            <option value="IDP">Individual Development Plan (IDP)</option>
+            <option value="Memorandum">Memorandum</option>
+            <option value="IDP">IDP</option>
             <option value="Appointment">Appointment</option>
             <option value="Office Clearance">Office Clearance</option>
-
         </select>
 
-        <!-- File Upload -->
+        <!-- File -->
         <label>Choose File</label>
         <input type="file" name="document" accept=".pdf,.doc,.docx" required>
 
         <button type="submit" class="btn">
-            <i class="fas fa-arrow-up"></i> Upload Document
+            <i class="fas fa-upload"></i> Upload Document
         </button>
 
     </form>

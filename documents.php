@@ -7,20 +7,13 @@ if ($conn->connect_error) {
 
 $selected_filter = $_GET['filter'] ?? 'ALL';
 
-$sections = [
-    "PDS",
-    "SALN",
-    "IPC",
-    "OPC",
-    "IPCR",
-    "OPCR",
-    "Special Order",
-    "Reporting for Duty",
-    "Memorandum",
-    "IDP",
-    "Appointment",
-    "Office Clearance"
-];
+/* ✅ FIX: get document types from correct column */
+$sections = [];
+$result = $conn->query("SELECT DISTINCT document_type FROM documents ORDER BY document_type ASC");
+
+while ($row = $result->fetch_assoc()) {
+    $sections[] = $row['document_type'];
+}
 
 function safe_class($text) {
     return str_replace(' ', '-', $text);
@@ -79,34 +72,14 @@ button {
 }
 
 h3 {
-  padding:10px;
-  border-radius:6px;
-  color:white;
-  text-align:center;
-}
-
-/* SECTION COLORS */
-.PDS { background:#4e73df; }
-.SALN { background:#1cc88a; }
-.IPC { background:#36b9cc; }
-.OPC { background:#f6c23e; }
-.IPCR { background:#e74a3b; }
-.OPCR { background:#6f42c1; }
-.Special-Order { background:#fd7e14; }
-.Reporting-for-Duty { background:#20c997; }
-.Memorandum { background:#858796; }
-.IDP { background:#17a2b8; }
-.Appointment { background:#6610f2; }
-.Office-Clearance { background:#28a745; }
-
-/* TABLE */
-table {
-  width:100%;
-  border-collapse:collapse;
+  margin: 0;
+  padding: 12px;
+  border-radius: 6px 6px 0 0;
+  color: white;
+  text-align: center;
 }
 
 th {
-  background:#2c3e50;
   color:white;
   padding:12px;
   text-align:left;
@@ -115,6 +88,11 @@ th {
 td {
   padding:10px;
   border-bottom:1px solid #ddd;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
 }
 
 tr:nth-child(even) {
@@ -174,6 +152,21 @@ iframe {
   height:calc(100% - 50px);
   border:none;
 }
+
+/* COLORS */
+.PDS, .PDS th { background:#4e73df; }
+.SALN, .SALN th { background:#1cc88a; }
+.IPC, .IPC th { background:#36b9cc; }
+.OPC, .OPC th { background:#f6c23e; color:black; }
+.IPCR, .IPCR th { background:#e74a3b; }
+.OPCR, .OPCR th { background:#6f42c1; }
+.Special-Order, .Special-Order th { background:#fd7e14; }
+.Reporting-for-Duty, .Reporting-for-Duty th { background:#20c997; }
+.Memorandum, .Memorandum th { background:#858796; }
+.IDP, .IDP th { background:#17a2b8; }
+.Appointment, .Appointment th { background:#6610f2; }
+.Office-Clearance, .Office-Clearance th { background:#28a745; }
+
 </style>
 </head>
 
@@ -187,16 +180,14 @@ iframe {
   <form method="GET">
     <select name="filter" onchange="this.form.submit()">
       <option value="ALL">All</option>
+
       <?php foreach ($sections as $sec) { ?>
-        <option value="<?= $sec ?>" <?= $selected_filter == $sec ? 'selected' : '' ?>>
-          <?= $sec ?>
+        <option value="<?= htmlspecialchars($sec) ?>" <?= $selected_filter == $sec ? 'selected' : '' ?>>
+          <?= htmlspecialchars($sec) ?>
         </option>
       <?php } ?>
-    </select>
 
-    <button type="button" onclick="window.location='upload_form.php'">
-      + Upload
-    </button>
+    </select>
   </form>
 </div>
 
@@ -208,10 +199,13 @@ $class = safe_class($section);
 ?>
 
 <div class="section">
-<h3 class="<?= $class ?>"><i class="fas fa-folder"></i> <?= $section ?></h3>
+
+<h3 class="<?= $class ?>">
+  <i class="fas fa-folder"></i> <?= htmlspecialchars($section) ?>
+</h3>
 
 <table>
-<tr>
+<tr class="<?= $class ?>">
 <th>Employee ID</th>
 <th>File</th>
 <th>Uploaded</th>
@@ -219,7 +213,13 @@ $class = safe_class($section);
 </tr>
 
 <?php
-$stmt = $conn->prepare("SELECT * FROM employee_documents WHERE document_type=? ORDER BY uploaded_at DESC");
+/* ✅ FIXED TABLE NAME: documents */
+$stmt = $conn->prepare("
+    SELECT * FROM documents 
+    WHERE document_type = ?
+    ORDER BY uploaded_at DESC
+");
+
 $stmt->bind_param("s", $section);
 $stmt->execute();
 $result = $stmt->get_result();
