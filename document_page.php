@@ -1,148 +1,171 @@
+<?php include "config.php"; ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HR Documents Portal</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HR Documents Portal</title>
 
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-    <style>
-        body {
+<style>
+body {
     font-family: 'Segoe UI', Tahoma, sans-serif;
-
-    /* 🔥 Background image */
-    background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Logo_of_the_Department_of_Environment_and_Natural_Resources.svg/1280px-Logo_of_the_Department_of_Environment_and_Natural_Resources.svg.png'); /* change path here */
+    background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Logo_of_the_Department_of_Environment_and_Natural_Resources.svg/1280px-Logo_of_the_Department_of_Environment_and_Natural_Resources.svg.png');
     background-size: cover;
     background-position: center;
-    background-repeat: no-repeat;
     background-attachment: fixed;
     margin: 0;
     padding: 20px;
 }
 
-        .container {
-            max-width: 1200px;
-            margin: 50px auto;
-            padding: 20px;
-        }
+.container {
+    max-width: 1200px;
+    margin: 40px auto;
+}
 
-        h1 {
-            text-align: center;
-            margin-bottom: 30px;
-            color: #333;
-        }
+h1 {
+    text-align: center;
+    color: #333;
+}
 
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-        }
+select {
+    display: block;
+    margin: 0 auto 25px auto;
+    padding: 10px;
+    width: 300px;
+    border-radius: 8px;
+}
 
-        .card {
-            padding: 25px;
-            border-radius: 12px;
-            text-align: center;
-            text-decoration: none;
-            color: #fff;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-            transition: all 0.3s ease;
-        }
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 15px;
+}
 
-        .card i {
-            font-size: 30px;
-            margin-bottom: 15px;
-        }
+.card {
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    color: white;
+    cursor: pointer;
+    transition: 0.3s;
+    display: none; /* IMPORTANT: hidden by default */
+}
 
-        .card:hover {
-            transform: translateY(-5px);
-            opacity: 0.9;
-        }
+.card:hover {
+    transform: translateY(-5px);
+}
 
-        /* Different colors per card */
-        .pds { background: #4e73df; }
-        .saln { background: #1cc88a; }
-        .ipc { background: #36b9cc; }
-        .opc { background: #f6c23e; }
-        .ipcr { background: #e74a3b; }
-        .opcr { background: #6f42c1; }
-        .special { background: #fd7e14; }
-        .duty { background: #20c997; }
-        .memo { background: #858796; }
-        .idp { background: #17a2b8; }
-        .appointment { background: #6610f2; }
-        .clearance { background: #28a745; }
-
-    </style>
+.pds { background:#4e73df; }
+.saln { background:#1cc88a; }
+.ipc { background:#36b9cc; }
+.opc { background:#f6c23e; }
+.ipcr { background:#e74a3b; }
+.opcr { background:#6f42c1; }
+.special { background:#fd7e14; }
+.duty { background:#20c997; }
+.memo { background:#858796; }
+.idp { background:#17a2b8; }
+.appointment { background:#6610f2; }
+.clearance { background:#28a745; }
+</style>
 </head>
+
 <body>
 
 <div class="container">
-    <h1>HR Documents Dashboard</h1>
 
-    <div class="grid">
-        <a href="pds.html" class="card pds">
-            <i class="fas fa-id-card"></i>
-            <div>Personal Data Sheet (PDS)</div>
-        </a>
+<h1>HR Documents Dashboard</h1>
 
-        <a href="saln.html" class="card saln">
-            <i class="fas fa-file-invoice-dollar"></i>
-            <div>SALN</div>
-        </a>
+<select id="employeeSelect">
+    <option value="">-- Select Employee --</option>
+    <?php
+    $sql = "SELECT employee_id, name FROM employees ORDER BY name ASC";
+    $result = $conn->query($sql);
+    while ($row = $result->fetch_assoc()) {
+        echo "<option value='{$row['employee_id']}'>{$row['name']}</option>";
+    }
+    ?>
+</select>
 
-        <a href="ipc.html" class="card ipc">
-            <i class="fas fa-user-check"></i>
-            <div>IPC</div>
-        </a>
+<div class="grid">
 
-        <a href="opc.html" class="card opc">
-            <i class="fas fa-building"></i>
-            <div>OPC</div>
-        </a>
+    <div class="card pds" id="card-PDS" onclick="openDoc('PDS')"><i class="fas fa-id-card"></i><br>PDS</div>
+    <div class="card saln" id="card-SALN" onclick="openDoc('SALN')"><i class="fas fa-file-invoice-dollar"></i><br>SALN</div>
+    <div class="card ipc" id="card-IPC" onclick="openDoc('IPC')"><i class="fas fa-user-check"></i><br>IPC</div>
+    <div class="card opc" id="card-OPC" onclick="openDoc('OPC')"><i class="fas fa-building"></i><br>OPC</div>
+    <div class="card ipcr" id="card-IPCR" onclick="openDoc('IPCR')"><i class="fas fa-chart-line"></i><br>IPCR</div>
+    <div class="card opcr" id="card-OPCR" onclick="openDoc('OPCR')"><i class="fas fa-chart-bar"></i><br>OPCR</div>
+    <div class="card special" id="card-Special Order" onclick="openDoc('Special Order')"><i class="fas fa-gavel"></i><br>Special Order</div>
+    <div class="card duty" id="card-Reporting for Duty" onclick="openDoc('Reporting for Duty')"><i class="fas fa-briefcase"></i><br>Duty</div>
+    <div class="card memo" id="card-Memorandum" onclick="openDoc('Memorandum')"><i class="fas fa-envelope"></i><br>Memo</div>
+    <div class="card idp" id="card-IDP" onclick="openDoc('IDP')"><i class="fas fa-lightbulb"></i><br>IDP</div>
+    <div class="card appointment" id="card-Appointment" onclick="openDoc('Appointment')"><i class="fas fa-user-tie"></i><br>Appointment</div>
+    <div class="card clearance" id="card-Office Clearance" onclick="openDoc('Office Clearance')"><i class="fas fa-check-circle"></i><br>Clearance</div>
 
-        <a href="ipcr.html" class="card ipcr">
-            <i class="fas fa-chart-line"></i>
-            <div>IPCR</div>
-        </a>
-
-        <a href="opcr.html" class="card opcr">
-            <i class="fas fa-chart-bar"></i>
-            <div>OPCR</div>
-        </a>
-
-        <a href="special-order.html" class="card special">
-            <i class="fas fa-gavel"></i>
-            <div>Special Order</div>
-        </a>
-
-        <a href="reporting-duty.html" class="card duty">
-            <i class="fas fa-briefcase"></i>
-            <div>Reporting for Duty</div>
-        </a>
-
-        <a href="memo.html" class="card memo">
-            <i class="fas fa-envelope"></i>
-            <div>Memorandum Issued</div>
-        </a>
-
-        <a href="idp.html" class="card idp">
-            <i class="fas fa-lightbulb"></i>
-            <div>IDP</div>
-        </a>
-
-        <a href="appointment.html" class="card appointment">
-            <i class="fas fa-user-tie"></i>
-            <div>Appointment</div>
-        </a>
-
-        <a href="clearance.html" class="card clearance">
-            <i class="fas fa-check-circle"></i>
-            <div>Office Clearance</div>
-        </a>
-    </div>
 </div>
+</div>
+
+<script>
+
+// Load document types per employee
+document.getElementById("employeeSelect").addEventListener("change", function () {
+
+    const empId = this.value;
+
+    resetCards();
+
+    if (!empId) return;
+
+    fetch(`get_document_types.php?employee_id=${empId}`)
+        .then(res => res.json())
+        .then(types => {
+
+            types.forEach(type => {
+                const card = document.getElementById("card-" + type);
+                if (card) {
+                    card.style.display = "block";
+                }
+            });
+
+        });
+});
+
+function resetCards() {
+    document.querySelectorAll(".card").forEach(card => {
+        card.style.display = "none";
+    });
+}
+
+// Open document
+function openDoc(type) {
+
+    const empId = document.getElementById("employeeSelect").value;
+
+    if (!empId) {
+        alert("Please select an employee first.");
+        return;
+    }
+
+    fetch(`get_document.php?employee_id=${empId}&type=${encodeURIComponent(type)}`)
+        .then(res => res.json())
+        .then(data => {
+
+            if (!data.file_path) {
+                alert("No document found.");
+                return;
+            }
+
+            window.open(data.file_path, "_blank");
+
+        });
+}
+
+// show all cards initially hidden state
+resetCards();
+
+</script>
 
 </body>
 </html>

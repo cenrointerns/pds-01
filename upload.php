@@ -6,64 +6,58 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $employee_id = $_POST['employee_id'];
     $document_type = $_POST['document_type'];
 
-    $file = $_FILES['document'];
+    // Get employee name
+    $sql = "SELECT name FROM employees WHERE employee_id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $employee_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
 
-    $fileName = basename($file['name']);
-    $fileTmp  = $file['tmp_name'];
-    $fileSize = $file['size'];
-
-    $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-    $allowed = ['pdf', 'doc', 'docx'];
-
-    // Validate type
-    if (!in_array($ext, $allowed)) {
-        die("Invalid file type. Only PDF, DOC, DOCX allowed.");
+    if (!$row) {
+        die("Employee not found.");
     }
 
-    // Validate size (5MB max)
-    if ($fileSize > 5 * 1024 * 1024) {
-        die("File too large. Max 5MB allowed.");
+    $employee_name = $row['name'];
+
+    // Clean folder names
+    $employee_folder = preg_replace("/[^a-zA-Z0-9_-]/", "_", $employee_name);
+    $doc_folder = preg_replace("/[^a-zA-Z0-9_-]/", "_", $document_type);
+
+    // Build full path: uploads/Name/DocumentType/
+    $upload_dir = "uploads/" . $employee_folder . "/" . $doc_folder . "/";
+
+    // Create directories if not exist
+    if (!file_exists($upload_dir)) {
+        mkdir($upload_dir, 0777, true);
     }
 
-    // Create upload folder
-    $uploadDir = "uploads/";
-    if (!is_dir($uploadDir)) {
-        mkdir($uploadDir, 0777, true);
-    }
+    // File handling
+    $file_name = basename($_FILES["document"]["name"]);
+    $file_tmp = $_FILES["document"]["tmp_name"];
 
-    // Safe unique file name
-    $safeName = time() . "_" . preg_replace("/[^a-zA-Z0-9\._-]/", "", $fileName);
-    $destination = $uploadDir . $safeName;
+    $file_ext = pathinfo($file_name, PATHINFO_EXTENSION);
 
-    if (move_uploaded_file($fileTmp, $destination)) {
+    $new_file_name = strtolower(str_replace(" ", "_", $document_type)) 
+                     . "_" . time() . "." . $file_ext;
 
-        // ✅ FIXED TABLE NAME: documents
-        $stmt = $conn->prepare("
-            INSERT INTO documents
-            (employee_id, file_name, document_type, file_path, file_type)
-            VALUES (?, ?, ?, ?, ?)
-        ");
+    $target_path = $upload_dir . $new_file_name;
 
-        $stmt->bind_param(
-            "issss",
-            $employee_id,
-            $fileName,
-            $document_type,
-            $destination,
-            $ext
-        );
+    // Move file
+    if (move_uploaded_file($file_tmp, $target_path)) {
 
-        if ($stmt->execute()) {
-            header("Location: documents.php?success=1");
-            exit;
-        } else {
-            echo "Database error: " . $stmt->error;
-        }
+        // Save to DB (optional but recommended)
+        $insert = "INSERT INTO documents (employee_id, document_type, file_path)
+                   VALUES (?, ?, ?)";
+        $stmt = $conn->prepare($insert);
+        $stmt->bind_param("sss", $employee_id, $document_type, $target_path);
+        $stmt->execute();
 
-        $stmt->close();
+        echo "Upload successful!";
+        echo "<br><a href='upload_form.php'>Back</a>";
 
     } else {
-        echo "File upload failed.";
+        echo "Upload failed.";
     }
 }
 ?>

@@ -7,7 +7,7 @@ if ($conn->connect_error) {
 
 $selected_filter = $_GET['filter'] ?? 'ALL';
 
-/* ✅ FIX: get document types from correct column */
+/* Get document types */
 $sections = [];
 $result = $conn->query("SELECT DISTINCT document_type FROM documents ORDER BY document_type ASC");
 
@@ -166,7 +166,6 @@ iframe {
 .IDP, .IDP th { background:#17a2b8; }
 .Appointment, .Appointment th { background:#6610f2; }
 .Office-Clearance, .Office-Clearance th { background:#28a745; }
-
 </style>
 </head>
 
@@ -206,18 +205,20 @@ $class = safe_class($section);
 
 <table>
 <tr class="<?= $class ?>">
-<th>Employee ID</th>
+<th>Employee</th>
 <th>File</th>
 <th>Uploaded</th>
 <th>Actions</th>
 </tr>
 
 <?php
-/* ✅ FIXED TABLE NAME: documents */
+/* ✅ FIXED JOIN USING YOUR employees.name COLUMN */
 $stmt = $conn->prepare("
-    SELECT * FROM documents 
-    WHERE document_type = ?
-    ORDER BY uploaded_at DESC
+    SELECT d.*, e.name 
+    FROM documents d
+    LEFT JOIN employees e ON d.employee_id = e.employee_id
+    WHERE d.document_type = ?
+    ORDER BY d.uploaded_at DESC
 ");
 
 $stmt->bind_param("s", $section);
@@ -242,7 +243,12 @@ if ($fileType == "pdf") {
 ?>
 
 <tr>
-<td><?= $row["employee_id"] ?></td>
+
+<!-- ✅ FIXED: SHOW EMPLOYEE NAME -->
+<td>
+  <strong><?= htmlspecialchars($row["name"] ?? 'Unknown Employee') ?></strong><br>
+ 
+</td>
 
 <td>
   <i class="fas <?= $icon ?>" style="color:<?= $color ?>"></i>
@@ -257,6 +263,7 @@ if ($fileType == "pdf") {
   <a href="edit_document.php?id=<?= $row['id'] ?>">Edit</a> |
   <a href="delete_document.php?id=<?= $row['id'] ?>" onclick="return confirm('Delete?')">Delete</a>
 </td>
+
 </tr>
 
 <?php } ?>
