@@ -55,7 +55,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <div class="login-container">
     <img src="assets/images/denr remv bg.png" alt="DENR Logo">
 
-    <h2>DENR Login</h2>
+    <h2>Login</h2>
 
     <?php if (!empty($error)): ?>
         <p style="color:red;"><?php echo $error; ?></p>
@@ -76,7 +76,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     </form>
 
     <div class="footer-text">
-        Department of Environment and Natural Resources
+        Department of Environment and Natural Resources - Manolo Fortich, Bukidnon
     </div>
 </div>
 
