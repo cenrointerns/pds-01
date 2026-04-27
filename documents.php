@@ -6,6 +6,7 @@ if ($conn->connect_error) {
 }
 
 $selected_filter = $_GET['filter'] ?? 'ALL';
+$search_name = $_GET['search'] ?? '';
 
 /* Get document types */
 $sections = [];
@@ -29,9 +30,17 @@ function safe_class($text) {
 
 <style>
 body {
-  font-family: Arial;
-  margin:40px;
-  background:#f5f6f8;
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+
+    /* 🔥 Background image */
+    background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Logo_of_the_Department_of_Environment_and_Natural_Resources.svg/1280px-Logo_of_the_Department_of_Environment_and_Natural_Resources.svg.png'); /* change path here */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+
+    margin: 0;
+    padding: 20px;
 }
 
 .container {
@@ -48,16 +57,22 @@ body {
   justify-content:space-between;
   align-items:center;
   margin-bottom:20px;
+  gap:10px;
 }
 
 form {
   display:flex;
   gap:10px;
+  flex-wrap:wrap;
 }
 
-select, button {
+input, select, button {
   padding:8px;
   border-radius:6px;
+}
+
+input {
+  border:1px solid #ccc;
 }
 
 button {
@@ -176,7 +191,16 @@ iframe {
 <div class="header">
   <h2>📁 Employee Documents</h2>
 
+  <!-- ✅ SEARCH + FILTER -->
   <form method="GET">
+
+    <input 
+      type="text" 
+      name="search" 
+      placeholder="Search employee name..."
+      value="<?= htmlspecialchars($search_name) ?>"
+    >
+
     <select name="filter" onchange="this.form.submit()">
       <option value="ALL">All</option>
 
@@ -187,6 +211,8 @@ iframe {
       <?php } ?>
 
     </select>
+
+    <button type="submit">Search</button>
   </form>
 </div>
 
@@ -212,16 +238,29 @@ $class = safe_class($section);
 </tr>
 
 <?php
-/* ✅ FIXED JOIN USING YOUR employees.name COLUMN */
-$stmt = $conn->prepare("
+/* ✅ SEARCH + FILTER QUERY */
+$sql = "
     SELECT d.*, e.name 
     FROM documents d
     LEFT JOIN employees e ON d.employee_id = e.employee_id
     WHERE d.document_type = ?
-    ORDER BY d.uploaded_at DESC
-");
+";
 
-$stmt->bind_param("s", $section);
+if (!empty($search_name)) {
+    $sql .= " AND e.name LIKE ?";
+}
+
+$sql .= " ORDER BY d.uploaded_at DESC";
+
+$stmt = $conn->prepare($sql);
+
+if (!empty($search_name)) {
+    $like = "%$search_name%";
+    $stmt->bind_param("ss", $section, $like);
+} else {
+    $stmt->bind_param("s", $section);
+}
+
 $stmt->execute();
 $result = $stmt->get_result();
 
@@ -244,10 +283,9 @@ if ($fileType == "pdf") {
 
 <tr>
 
-<!-- ✅ FIXED: SHOW EMPLOYEE NAME -->
+<!-- ✅ CLEAN NAME ONLY -->
 <td>
-  <strong><?= htmlspecialchars($row["name"] ?? 'Unknown Employee') ?></strong><br>
- 
+  <strong><?= htmlspecialchars($row["name"] ?? 'Unknown Employee') ?></strong>
 </td>
 
 <td>

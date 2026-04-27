@@ -50,7 +50,7 @@ select {
     color: white;
     cursor: pointer;
     transition: 0.3s;
-    display: none; /* IMPORTANT: hidden by default */
+    display: none;
 }
 
 .card:hover {
@@ -69,6 +69,23 @@ select {
 .idp { background:#17a2b8; }
 .appointment { background:#6610f2; }
 .clearance { background:#28a745; }
+
+/* Upload button */
+.upload-btn {
+    background:#4e73df;
+    color:#fff;
+    border:none;
+    padding:10px 14px;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:14px;
+}
+
+.upload-btn:hover {
+    opacity:0.85;
+    transform: translateY(-2px);
+    transition: 0.2s;
+}
 </style>
 </head>
 
@@ -76,7 +93,14 @@ select {
 
 <div class="container">
 
-<h1>HR Documents Dashboard</h1>
+<!-- HEADER WITH UPLOAD BUTTON -->
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+    <h1 style="margin:0;">HR Documents Dashboard</h1>
+
+    <button class="upload-btn" onclick="goToUpload()">
+        <i class="fas fa-upload"></i> Upload
+    </button>
+</div>
 
 <select id="employeeSelect">
     <option value="">-- Select Employee --</option>
@@ -108,6 +132,11 @@ select {
 </div>
 
 <script>
+
+// Upload redirect
+function goToUpload() {
+    window.location.href = "upload_form.php";
+}
 
 // Load document types per employee
 document.getElementById("employeeSelect").addEventListener("change", function () {
@@ -162,7 +191,7 @@ function openDoc(type) {
         });
 }
 
-// show all cards initially hidden state
+// initial state
 resetCards();
 
 </script>

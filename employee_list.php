@@ -10,22 +10,49 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// Filter from GET request
+// Filter
 $filter = isset($_GET['filter']) ? $_GET['filter'] : 'All';
 
-// Query based on filter
+// Pagination setup
+$limit = 10;
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+if ($page < 1) $page = 1;
+
+$offset = ($page - 1) * $limit;
+
+// --------------------
+// COUNT QUERY
+// --------------------
+if ($filter === 'Permanent' || $filter === 'Contract of Service') {
+    $countStmt = $conn->prepare("SELECT COUNT(*) as total FROM employees WHERE status = ?");
+    $countStmt->bind_param("s", $filter);
+} else {
+    $countStmt = $conn->prepare("SELECT COUNT(*) as total FROM employees");
+}
+
+$countStmt->execute();
+$countResult = $countStmt->get_result();
+$totalRows = $countResult->fetch_assoc()['total'];
+$totalPages = ceil($totalRows / $limit);
+
+// --------------------
+// MAIN QUERY
+// --------------------
 if ($filter === 'Permanent' || $filter === 'Contract of Service') {
     $stmt = $conn->prepare("
         SELECT employee_id, name, age, place_of_assignment, status, image 
         FROM employees 
         WHERE status = ?
+        LIMIT ? OFFSET ?
     ");
-    $stmt->bind_param("s", $filter);
+    $stmt->bind_param("sii", $filter, $limit, $offset);
 } else {
     $stmt = $conn->prepare("
         SELECT employee_id, name, age, place_of_assignment, status, image 
         FROM employees
+        LIMIT ? OFFSET ?
     ");
+    $stmt->bind_param("ii", $limit, $offset);
 }
 
 $stmt->execute();
@@ -44,18 +71,16 @@ $image_url    = "assets/image/employee/";
 
     <style>
         body {
-    font-family: 'Segoe UI', Tahoma, sans-serif;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Logo_of_the_Department_of_Environment_and_Natural_Resources.svg/1280px-Logo_of_the_Department_of_Environment_and_Natural_Resources.svg.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            margin: 0;
+            padding: 20px;
+        }
 
-    /* 🔥 Background image */
-    background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Logo_of_the_Department_of_Environment_and_Natural_Resources.svg/1280px-Logo_of_the_Department_of_Environment_and_Natural_Resources.svg.png'); /* change path here */
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-
-    margin: 0;
-    padding: 20px;
-}
         img {
             width: 50px;
             height: 50px;
@@ -69,6 +94,8 @@ $image_url    = "assets/image/employee/";
             color: white;
             border-radius: 5px;
             text-decoration: none;
+            margin: 2px;
+            display: inline-block;
         }
 
         .badge {
@@ -77,17 +104,13 @@ $image_url    = "assets/image/employee/";
             color: white;
         }
 
-        .permanent {
-            background-color: #28a745;
-        }
-
-        .contract-of-service {
-            background-color: orange;
-        }
+        .permanent { background-color: #28a745; }
+        .contract-of-service { background-color: orange; }
 
         table {
             width: 100%;
             border-collapse: collapse;
+            background: white;
         }
 
         th, td {
@@ -108,68 +131,83 @@ $image_url    = "assets/image/employee/";
     <h2>List of Employees</h2>
 
     <!-- Filter -->
-    <div class="filter">
-        <form method="GET">
-            <label>Show: </label>
-            <select name="filter" onchange="this.form.submit()">
-                <option value="All" <?= $filter == 'All' ? 'selected' : '' ?>>All</option>
-                <option value="Permanent" <?= $filter == 'Permanent' ? 'selected' : '' ?>>Permanent</option>
-                <option value="Contract of Service" <?= $filter == 'Contract of Service' ? 'selected' : '' ?>>Contract of Service</option>
-            </select>
-        </form>
+    <form method="GET">
+        <label>Show: </label>
+        <select name="filter" onchange="this.form.submit()">
+            <option value="All" <?= $filter == 'All' ? 'selected' : '' ?>>All</option>
+            <option value="Permanent" <?= $filter == 'Permanent' ? 'selected' : '' ?>>Permanent</option>
+            <option value="Contract of Service" <?= $filter == 'Contract of Service' ? 'selected' : '' ?>>Contract of Service</option>
+        </select>
+    </form>
+
+    <br>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Image</th>
+                <th>Name</th>
+                <th>Age</th>
+                <th>Place of Assignment</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+
+        <tbody>
+        <?php while($row = $result->fetch_assoc()): 
+            $img_file = (!empty($row['image']) && file_exists($image_folder . $row['image']))
+                ? $row['image']
+                : 'default.png';
+
+            $statusClass = strtolower(str_replace(' ', '-', $row['status']));
+        ?>
+            <tr>
+                <td><?= htmlspecialchars($row['employee_id']); ?></td>
+
+                <td>
+                    <img src="<?= $image_url . htmlspecialchars($img_file); ?>">
+                </td>
+
+                <td><?= htmlspecialchars($row['name']); ?></td>
+                <td><?= htmlspecialchars($row['age']); ?></td>
+                <td><?= htmlspecialchars($row['place_of_assignment']); ?></td>
+
+                <td>
+                    <span class="badge <?= $statusClass ?>">
+                        <?= htmlspecialchars($row['status']); ?>
+                    </span>
+                </td>
+
+                <td>
+                    <a href="employee_info.php?employee_id=<?= $row['employee_id']; ?>" class="btn">
+                        View
+                    </a>
+                </td>
+            </tr>
+        <?php endwhile; ?>
+        </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <div style="margin-top: 20px; text-align: center;">
+        <?php if ($page > 1): ?>
+            <a class="btn" href="?filter=<?= $filter ?>&page=<?= $page - 1 ?>">Prev</a>
+        <?php endif; ?>
+
+        <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+            <a class="btn" href="?filter=<?= $filter ?>&page=<?= $i ?>"
+               style="<?= $i == $page ? 'background-color:#333;' : '' ?>">
+                <?= $i ?>
+            </a>
+        <?php endfor; ?>
+
+        <?php if ($page < $totalPages): ?>
+            <a class="btn" href="?filter=<?= $filter ?>&page=<?= $page + 1 ?>">Next</a>
+        <?php endif; ?>
     </div>
 
-    <div class="table-wrapper">
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Image</th>
-                    <th>Name</th>
-                    <th>Age</th>
-                    <th>Place of Assignment</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-
-            <tbody>
-            <?php while($row = $result->fetch_assoc()): 
-                $img_file = (!empty($row['image']) && file_exists($image_folder . $row['image']))
-                    ? $row['image']
-                    : 'default.png';
-
-                $statusClass = strtolower(str_replace(' ', '-', $row['status']));
-            ?>
-                <tr>
-                    <td><?= htmlspecialchars($row['employee_id']); ?></td>
-
-                    <td>
-                        <img src="<?= $image_url . htmlspecialchars($img_file); ?>" 
-                             alt="<?= htmlspecialchars($row['name']); ?>">
-                    </td>
-
-                    <td><?= htmlspecialchars($row['name']); ?></td>
-                    <td><?= htmlspecialchars($row['age']); ?></td>
-
-                    <td><?= htmlspecialchars($row['place_of_assignment']); ?></td>
-
-                    <td>
-                        <span class="badge <?= $statusClass ?>">
-                            <?= htmlspecialchars($row['status']); ?>
-                        </span>
-                    </td>
-
-                    <td>
-                        <a href="employee_info.php?employee_id=<?= $row['employee_id']; ?>" class="btn">
-                            View
-                        </a>
-                    </td>
-                </tr>
-            <?php endwhile; ?>
-            </tbody>
-        </table>
-    </div>
 </div>
 
 </body>
