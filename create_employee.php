@@ -5,8 +5,6 @@ if ($conn->connect_error) die("Connection failed");
 $image_folder = "assets/image/employee/";
 if (!file_exists($image_folder)) mkdir($image_folder,0777,true);
 
-$successMessage = "";
-
 /* FILTER */
 $statusFilter = $_GET['status'] ?? "";
 
@@ -33,8 +31,6 @@ if(isset($_POST['add'])){
     $data['civil_service_eligibility'],$data['education'],$data['date_of_appointment']);
 
     $stmt->execute();
-
-    $successMessage = "Employee successfully added!";
 }
 
 /* DELETE */
@@ -79,8 +75,6 @@ if(isset($_POST['update'])){
     $id);
 
     $stmt->execute();
-
-    $successMessage = "Employee successfully updated!";
 }
 
 /* PAGINATION */
@@ -116,9 +110,11 @@ if(isset($_GET['edit'])){
 body{font-family:Segoe UI;background:#eef2f7}
 .container{max-width:1100px;margin:auto;background:#fff;padding:20px;border-radius:10px}
 
+/* GRID */
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:10px}
 .full{grid-column:span 2}
 
+/* LABELS */
 .form-group{display:flex;flex-direction:column}
 .form-group label{
     font-size:13px;
@@ -128,6 +124,7 @@ body{font-family:Segoe UI;background:#eef2f7}
     padding-left:5px;
 }
 
+/* INPUTS */
 input,select{
     width:100%;
     padding:10px 14px;
@@ -136,6 +133,7 @@ input,select{
     box-sizing:border-box;
 }
 
+/* BUTTON */
 button{
     padding:10px;
     border:none;
@@ -145,29 +143,18 @@ button{
     cursor:pointer;
 }
 
+/* TABLE */
 table{width:100%;margin-top:20px}
 th,td{padding:10px;text-align:center}
 tr:hover{background:#f1f5f9;cursor:pointer}
 
 img{width:50px;height:50px;border-radius:50%}
 
-.modal{
-    display:none;
-    position:fixed;
-    top:0;left:0;
-    width:100%;height:100%;
-    background:rgba(0,0,0,.5);
-}
+/* MODAL */
+.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5)}
+.modal-content{background:#fff;margin:5% auto;padding:20px;width:700px;max-width:95%;border-radius:10px}
 
-.modal-content{
-    background:#fff;
-    margin:5% auto;
-    padding:20px;
-    width:700px;
-    max-width:95%;
-    border-radius:10px;
-}
-
+/* PAGINATION */
 .pagination{text-align:center;margin-top:20px}
 .pagination a{
     display:inline-block;
@@ -182,13 +169,6 @@ img{width:50px;height:50px;border-radius:50%}
     background:#4facfe;
     color:#fff;
     font-weight:bold;
-}
-
-/* SUCCESS MODAL */
-#successModal .modal-content{
-    width:300px;
-    text-align:center;
-    padding:25px;
 }
 </style>
 </head>
@@ -336,33 +316,43 @@ img{width:50px;height:50px;border-radius:50%}
 </div>
 </div>
 
-<!-- SUCCESS MODAL -->
-<div id="successModal" class="modal">
-<div class="modal-content">
-<h3 id="successText"></h3>
-<button onclick="closeSuccess()">OK</button>
-</div>
+<!-- PROFILE -->
+<div id="profileModal" class="modal">
+<div class="modal-content" id="profileContent"></div>
 </div>
 
 <script>
-function openModal(){formModal.style.display="block"}
-function closeModal(){formModal.style.display="none"}
-
-function showSuccess(msg){
-document.getElementById("successText").innerText=msg;
-document.getElementById("successModal").style.display="block";
-}
-function closeSuccess(){
-document.getElementById("successModal").style.display="none";
-}
-
 <?php if($edit): ?>
 document.getElementById("formModal").style.display="block";
 <?php endif; ?>
 
-<?php if(!empty($successMessage)): ?>
-showSuccess("<?= $successMessage ?>");
-<?php endif; ?>
+document.getElementById("search").addEventListener("keyup",function(){
+let v=this.value;
+let xhr=new XMLHttpRequest();
+xhr.open("GET","search.php?search="+v,true);
+xhr.onload=()=>document.getElementById("table-data").innerHTML=xhr.responseText;
+xhr.send();
+});
+
+function openModal(){formModal.style.display="block"}
+function closeModal(){formModal.style.display="none"}
+
+function showProfile(d){
+let img=d.image?"assets/image/employee/"+d.image:"assets/image/employee/default.png";
+profileContent.innerHTML=`
+<div style="text-align:center">
+<img src="${img}" width="100">
+<h2>${d.name}</h2>
+<p>${d.status}</p>
+<p>${d.position_title}</p>
+<p>${d.place_of_assignment}</p>
+</div>`;
+profileModal.style.display="block";
+}
+
+window.onclick=e=>{
+if(e.target.classList.contains("modal")) e.target.style.display="none";
+}
 </script>
 
 </body>
