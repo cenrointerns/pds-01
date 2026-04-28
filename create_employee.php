@@ -5,8 +5,6 @@ if ($conn->connect_error) die("Connection failed");
 $image_folder = "assets/image/employee/";
 if (!file_exists($image_folder)) mkdir($image_folder,0777,true);
 
-$successMessage = "";
-
 /* FILTER */
 $statusFilter = $_GET['status'] ?? "";
 
@@ -33,8 +31,6 @@ if(isset($_POST['add'])){
     $data['civil_service_eligibility'],$data['education'],$data['date_of_appointment']);
 
     $stmt->execute();
-
-    $successMessage = "Employee successfully added!";
 }
 
 /* DELETE */
@@ -79,8 +75,6 @@ if(isset($_POST['update'])){
     $id);
 
     $stmt->execute();
-
-    $successMessage = "Employee successfully updated!";
 }
 
 /* PAGINATION */
@@ -116,17 +110,14 @@ if(isset($_GET['edit'])){
 body{font-family:Segoe UI;background:#eef2f7}
 .container{max-width:1100px;margin:auto;background:#fff;padding:20px;border-radius:10px}
 
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:10px}
-.full{grid-column:span 2}
-
-.form-group{display:flex;flex-direction:column}
-.form-group label{
-    font-size:13px;
-    margin-bottom:4px;
-    color:#555;
-    font-weight:600;
-    padding-left:5px;
+/* FORM GRID FIX */
+.form-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:15px;
+    margin-top:10px;
 }
+.full{grid-column:span 2}
 
 input,select{
     width:100%;
@@ -134,8 +125,10 @@ input,select{
     border-radius:25px;
     border:1px solid #ccc;
     box-sizing:border-box;
+    font-size:14px;
 }
 
+/* BUTTON */
 button{
     padding:10px;
     border:none;
@@ -145,20 +138,21 @@ button{
     cursor:pointer;
 }
 
+/* TABLE */
 table{width:100%;margin-top:20px}
 th,td{padding:10px;text-align:center}
 tr:hover{background:#f1f5f9;cursor:pointer}
 
 img{width:50px;height:50px;border-radius:50%}
 
+/* MODAL */
 .modal{
     display:none;
     position:fixed;
     top:0;left:0;
     width:100%;height:100%;
-    background:rgba(0,0,0,.5);
+    background:rgba(0,0,0,.5)
 }
-
 .modal-content{
     background:#fff;
     margin:5% auto;
@@ -168,27 +162,28 @@ img{width:50px;height:50px;border-radius:50%}
     border-radius:10px;
 }
 
-.pagination{text-align:center;margin-top:20px}
+/* PAGINATION FIX */
+.pagination{
+    margin-top:20px;
+    text-align:center;
+}
 .pagination a{
     display:inline-block;
     margin:4px;
     padding:8px 14px;
     border-radius:20px;
     background:#f1f5f9;
-    text-decoration:none;
     color:#333;
+    text-decoration:none;
+}
+.pagination a:hover{
+    background:#4facfe;
+    color:#fff;
 }
 .pagination a.active{
     background:#4facfe;
     color:#fff;
     font-weight:bold;
-}
-
-/* SUCCESS MODAL */
-#successModal .modal-content{
-    width:300px;
-    text-align:center;
-    padding:25px;
 }
 </style>
 </head>
@@ -202,6 +197,7 @@ img{width:50px;height:50px;border-radius:50%}
 
 <button onclick="openModal()">+ Add Employee</button>
 
+<!-- FILTER -->
 <form method="GET">
 <select name="status" onchange="this.form.submit()">
 <option value="">All</option>
@@ -216,6 +212,7 @@ img{width:50px;height:50px;border-radius:50%}
 
 <?php while($row=$result->fetch_assoc()): ?>
 <tr onclick='showProfile(<?= json_encode($row) ?>)'>
+
 <td><?= $row['employee_id'] ?></td>
 
 <td>
@@ -233,11 +230,13 @@ img{width:50px;height:50px;border-radius:50%}
 <a href="?edit=<?= $row['employee_id'] ?>&status=<?= $statusFilter ?>">Edit</a>
 <a href="?delete=<?= $row['employee_id'] ?>&status=<?= $statusFilter ?>">Delete</a>
 </td>
+
 </tr>
 <?php endwhile; ?>
 </table>
 </div>
 
+<!-- PAGINATION -->
 <div class="pagination">
 <?php for($i=1;$i<=$totalPages;$i++): ?>
 <a href="?page=<?=$i?>&status=<?=$statusFilter?>" class="<?=($i==$page)?'active':''?>">
@@ -261,68 +260,28 @@ img{width:50px;height:50px;border-radius:50%}
 
 <div class="form-grid">
 
-<div class="form-group full">
-<label>Name</label>
-<input name="name" value="<?= $edit?$editData['name']:'' ?>" required>
-</div>
+<input name="name" placeholder="Name" class="full" value="<?= $edit?$editData['name']:'' ?>">
 
-<div class="form-group">
-<label>Status</label>
 <select name="status">
 <option value="Permanent" <?=($edit && $editData['status']=="Permanent")?"selected":""?>>Permanent</option>
 <option value="Contract of Service" <?=($edit && $editData['status']=="Contract of Service")?"selected":""?>>COS</option>
 </select>
-</div>
 
-<div class="form-group">
-<label>Gender</label>
 <input name="gender" value="<?= $edit?$editData['gender']:'' ?>">
-</div>
-
-<div class="form-group">
-<label>Date of Birth</label>
 <input type="date" name="date_of_birth" value="<?= $edit?$editData['date_of_birth']:'' ?>">
-</div>
 
-<div class="form-group">
-<label>NOSCA Item Number</label>
 <input name="nosca_item_number" value="<?= $edit?$editData['nosca_item_number']:'' ?>">
-</div>
-
-<div class="form-group">
-<label>Place of Assignment</label>
 <input name="place_of_assignment" value="<?= $edit?$editData['place_of_assignment']:'' ?>">
-</div>
 
-<div class="form-group">
-<label>Position Title</label>
 <input name="position_title" value="<?= $edit?$editData['position_title']:'' ?>">
-</div>
-
-<div class="form-group">
-<label>Salary Grade</label>
 <input name="salary_grade" value="<?= $edit?$editData['salary_grade']:'' ?>">
-</div>
 
-<div class="form-group">
-<label>Civil Service Eligibility</label>
 <input name="civil_service_eligibility" value="<?= $edit?$editData['civil_service_eligibility']:'' ?>">
-</div>
-
-<div class="form-group">
-<label>Education</label>
 <input name="education" value="<?= $edit?$editData['education']:'' ?>">
-</div>
 
-<div class="form-group">
-<label>Date of Appointment</label>
 <input type="date" name="date_of_appointment" value="<?= $edit?$editData['date_of_appointment']:'' ?>">
-</div>
 
-<div class="form-group full">
-<label>Employee Image</label>
-<input type="file" name="image">
-</div>
+<input type="file" name="image" class="full">
 
 <?php if($edit): ?>
 <button name="update" class="full">Update</button>
@@ -336,33 +295,47 @@ img{width:50px;height:50px;border-radius:50%}
 </div>
 </div>
 
-<!-- SUCCESS MODAL -->
-<div id="successModal" class="modal">
-<div class="modal-content">
-<h3 id="successText"></h3>
-<button onclick="closeSuccess()">OK</button>
-</div>
+<!-- PROFILE -->
+<div id="profileModal" class="modal">
+<div class="modal-content" id="profileContent"></div>
 </div>
 
 <script>
-function openModal(){formModal.style.display="block"}
-function closeModal(){formModal.style.display="none"}
-
-function showSuccess(msg){
-document.getElementById("successText").innerText=msg;
-document.getElementById("successModal").style.display="block";
-}
-function closeSuccess(){
-document.getElementById("successModal").style.display="none";
-}
-
+// AUTO OPEN EDIT
 <?php if($edit): ?>
 document.getElementById("formModal").style.display="block";
 <?php endif; ?>
 
-<?php if(!empty($successMessage)): ?>
-showSuccess("<?= $successMessage ?>");
-<?php endif; ?>
+// SEARCH
+document.getElementById("search").addEventListener("keyup",function(){
+let v=this.value;
+let xhr=new XMLHttpRequest();
+xhr.open("GET","search.php?search="+v,true);
+xhr.onload=()=>document.getElementById("table-data").innerHTML=xhr.responseText;
+xhr.send();
+});
+
+// MODAL
+function openModal(){formModal.style.display="block"}
+function closeModal(){formModal.style.display="none"}
+
+// PROFILE
+function showProfile(d){
+let img=d.image?"assets/image/employee/"+d.image:"assets/image/employee/default.png";
+profileContent.innerHTML=`
+<div style="text-align:center">
+<img src="${img}" width="100">
+<h2>${d.name}</h2>
+<p>${d.status}</p>
+<p>${d.position_title}</p>
+<p>${d.place_of_assignment}</p>
+</div>`;
+profileModal.style.display="block";
+}
+
+window.onclick=e=>{
+if(e.target.classList.contains("modal")) e.target.style.display="none";
+}
 </script>
 
 </body>
