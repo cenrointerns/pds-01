@@ -140,7 +140,7 @@ $activityResult = $conn->query($activityQuery);
     <div class="sidebar">
         <h2>DENR</h2>
         <ul>
-            <li>Dashboard</li>
+            <li><a href="create_employee.php">Manage Employee</a></li>
             <li><a href="employee_list.php">Employees</a></li>
             <li><a href="upload_form.php">Add Documents</a></li>
             <li><a href="document_page.php">Documents</a></li>

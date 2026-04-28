@@ -1,264 +1,221 @@
 <?php
-// DB CONNECTION
-$host = "localhost";
-$user = "root";
-$pass = "";
-$db   = "cenro";
-
-$conn = new mysqli($host, $user, $pass, $db);
-if ($conn->connect_error) die("Connection failed: " . $conn->connect_error);
+$conn = new mysqli("localhost","root","","cenro");
+if ($conn->connect_error) die("Connection failed");
 
 $image_folder = "assets/image/employee/";
-if (!file_exists($image_folder)) {
-    mkdir($image_folder, 0777, true);
-}
+if (!file_exists($image_folder)) mkdir($image_folder,0777,true);
 
-/* ================= FILTER ================= */
-$statusFilter = isset($_GET['status']) ? $_GET['status'] : "";
+$successMessage = "";
 
-/* ================= CREATE ================= */
-if (isset($_POST['add'])) {
+/* FILTER */
+$statusFilter = $_GET['status'] ?? "";
 
-    $name = $_POST['name'];
-    $status = $_POST['status'];
+/* CREATE */
+if(isset($_POST['add'])){
+    $data=$_POST;
 
-    $gender = $_POST['gender'];
-    $dob = $_POST['date_of_birth'];
-    $nosca = $_POST['nosca_item_number'];
-    $assignment = $_POST['place_of_assignment'];
-    $position = $_POST['position_title'];
-    $salary = $_POST['salary_grade'];
-    $civil = $_POST['civil_service_eligibility'];
-    $education = $_POST['education'];
-    $appointment = $_POST['date_of_appointment'];
-
-    $image_name = null;
-    if (!empty($_FILES['image']['name'])) {
-        $ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
-        $image_name = uniqid() . "." . $ext;
-        move_uploaded_file($_FILES['image']['tmp_name'], $image_folder . $image_name);
+    $image_name=null;
+    if(!empty($_FILES['image']['name'])){
+        $ext=pathinfo($_FILES['image']['name'],PATHINFO_EXTENSION);
+        $image_name=uniqid().".".$ext;
+        move_uploaded_file($_FILES['image']['tmp_name'],$image_folder.$image_name);
     }
 
-    $stmt = $conn->prepare("INSERT INTO employees 
-    (name, status, image,
-     gender, date_of_birth, nosca_item_number, place_of_assignment,
-     position_title, salary_grade, civil_service_eligibility,
-     education, date_of_appointment)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt=$conn->prepare("INSERT INTO employees 
+    (name,status,image,gender,date_of_birth,nosca_item_number,place_of_assignment,
+    position_title,salary_grade,civil_service_eligibility,education,date_of_appointment)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?)");
 
-    $stmt->bind_param(
-        "ssssssssssss",
-        $name, $status, $image_name,
-        $gender, $dob, $nosca, $assignment,
-        $position, $salary, $civil,
-        $education, $appointment
-    );
+    $stmt->bind_param("ssssssssssss",
+    $data['name'],$data['status'],$image_name,
+    $data['gender'],$data['date_of_birth'],$data['nosca_item_number'],
+    $data['place_of_assignment'],$data['position_title'],$data['salary_grade'],
+    $data['civil_service_eligibility'],$data['education'],$data['date_of_appointment']);
 
     $stmt->execute();
+
+    $successMessage = "Employee successfully added!";
 }
 
-/* ================= DELETE ================= */
-if (isset($_GET['delete'])) {
-    $id = (int)$_GET['delete'];
+/* DELETE */
+if(isset($_GET['delete'])){
+    $id=(int)$_GET['delete'];
 
-    $img = $conn->query("SELECT image FROM employees WHERE employee_id=$id")->fetch_assoc();
-    if (!empty($img['image']) && file_exists($image_folder . $img['image'])) {
-        unlink($image_folder . $img['image']);
+    $img=$conn->query("SELECT image FROM employees WHERE employee_id=$id")->fetch_assoc();
+    if($img && $img['image'] && file_exists($image_folder.$img['image'])){
+        unlink($image_folder.$img['image']);
     }
 
     $conn->query("DELETE FROM employees WHERE employee_id=$id");
 }
 
-/* ================= UPDATE ================= */
-if (isset($_POST['update'])) {
+/* UPDATE */
+if(isset($_POST['update'])){
+    $data=$_POST;
+    $id=$data['id'];
 
-    $id = $_POST['id'];
-    $name = $_POST['name'];
-    $status = $_POST['status'];
+    $image_name=$data['old_image'];
 
-    $gender = $_POST['gender'];
-    $dob = $_POST['date_of_birth'];
-    $nosca = $_POST['nosca_item_number'];
-    $assignment = $_POST['place_of_assignment'];
-    $position = $_POST['position_title'];
-    $salary = $_POST['salary_grade'];
-    $civil = $_POST['civil_service_eligibility'];
-    $education = $_POST['education'];
-    $appointment = $_POST['date_of_appointment'];
-
-    $image_name = $_POST['old_image'];
-
-    if (!empty($_FILES['image']['name'])) {
-        if ($image_name && file_exists($image_folder . $image_name)) {
-            unlink($image_folder . $image_name);
+    if(!empty($_FILES['image']['name'])){
+        if($image_name && file_exists($image_folder.$image_name)){
+            unlink($image_folder.$image_name);
         }
-
-        $ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
-        $image_name = uniqid() . "." . $ext;
-        move_uploaded_file($_FILES['image']['tmp_name'], $image_folder . $image_name);
+        $ext=pathinfo($_FILES['image']['name'],PATHINFO_EXTENSION);
+        $image_name=uniqid().".".$ext;
+        move_uploaded_file($_FILES['image']['tmp_name'],$image_folder.$image_name);
     }
 
-    $stmt = $conn->prepare("UPDATE employees SET 
-        name=?, status=?, image=?,
-        gender=?, date_of_birth=?, nosca_item_number=?, place_of_assignment=?,
-        position_title=?, salary_grade=?, civil_service_eligibility=?,
-        education=?, date_of_appointment=?
-        WHERE employee_id=?");
+    $stmt=$conn->prepare("UPDATE employees SET 
+    name=?,status=?,image=?,gender=?,date_of_birth=?,nosca_item_number=?,
+    place_of_assignment=?,position_title=?,salary_grade=?,
+    civil_service_eligibility=?,education=?,date_of_appointment=?
+    WHERE employee_id=?");
 
-    $stmt->bind_param(
-        "ssssssssssssi",
-        $name, $status, $image_name,
-        $gender, $dob, $nosca, $assignment,
-        $position, $salary, $civil,
-        $education, $appointment,
-        $id
-    );
+    $stmt->bind_param("ssssssssssssi",
+    $data['name'],$data['status'],$image_name,
+    $data['gender'],$data['date_of_birth'],$data['nosca_item_number'],
+    $data['place_of_assignment'],$data['position_title'],$data['salary_grade'],
+    $data['civil_service_eligibility'],$data['education'],$data['date_of_appointment'],
+    $id);
 
     $stmt->execute();
+
+    $successMessage = "Employee successfully updated!";
 }
 
-/* ================= PAGINATION ================= */
-$limit = 10;
+/* PAGINATION */
+$limit=10;
+$page=max(1,(int)($_GET['page']??1));
+$offset=($page-1)*$limit;
 
-$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-if ($page < 1) $page = 1;
-
-$offset = ($page - 1) * $limit;
-
-$where = "";
-if ($statusFilter == "Permanent" || $statusFilter == "Contract of Service") {
-    $where = "WHERE status = '" . $conn->real_escape_string($statusFilter) . "'";
+$where="";
+if($statusFilter){
+    $where="WHERE status='".$conn->real_escape_string($statusFilter)."'";
 }
 
-$totalResult = $conn->query("SELECT COUNT(*) as total FROM employees $where");
-$totalRow = $totalResult->fetch_assoc();
-$totalPages = ceil($totalRow['total'] / $limit);
+$total=$conn->query("SELECT COUNT(*) total FROM employees $where")->fetch_assoc()['total'];
+$totalPages=ceil($total/$limit);
 
-$result = $conn->query("
-    SELECT * FROM employees 
-    $where
-    ORDER BY employee_id DESC 
-    LIMIT $limit OFFSET $offset
-");
+$result=$conn->query("SELECT * FROM employees $where ORDER BY employee_id DESC LIMIT $limit OFFSET $offset");
 
-/* ================= EDIT ================= */
-$edit = false;
-if (isset($_GET['edit'])) {
-    $id = (int)$_GET['edit'];
-    $editData = $conn->query("SELECT * FROM employees WHERE employee_id=$id")->fetch_assoc();
-    $edit = true;
+/* EDIT */
+$edit=false;
+if(isset($_GET['edit'])){
+    $id=(int)$_GET['edit'];
+    $editData=$conn->query("SELECT * FROM employees WHERE employee_id=$id")->fetch_assoc();
+    $edit=true;
 }
 ?>
 
 <!DOCTYPE html>
 <html>
 <head>
-<title>Employee CRUD</title>
+<title>Employee Dashboard</title>
 
 <style>
-body { font-family: Arial; background:#f4f6f9; padding:20px; }
-.container { max-width:900px; margin:auto; background:white; padding:20px; border-radius:10px; }
+body{font-family:Segoe UI;background:#eef2f7}
+.container{max-width:1100px;margin:auto;background:#fff;padding:20px;border-radius:10px}
 
-input, select { padding:8px; margin:5px; width:100%; }
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:10px}
+.full{grid-column:span 2}
 
-button {
-    padding:10px;
-    background:#4facfe;
-    color:white;
-    border:none;
-    cursor:pointer;
-    border-radius:6px;
+.form-group{display:flex;flex-direction:column}
+.form-group label{
+    font-size:13px;
+    margin-bottom:4px;
+    color:#555;
+    font-weight:600;
+    padding-left:5px;
 }
 
-.reset-btn {
-    width:50px;
-}
-
-table { width:100%; margin-top:20px; border-collapse:collapse; }
-th, td { padding:10px; border-bottom:1px solid #ddd; text-align:center; }
-
-.permanent { color:green; font-weight:bold; }
-.cos { color:orange; font-weight:bold; }
-
-img { width:50px; height:50px; object-fit:cover; border-radius:50%; }
-
-.pagination { margin-top:20px; text-align:center; }
-.pagination a {
-    margin:0 5px;
-    padding:5px 10px;
+input,select{
+    width:100%;
+    padding:10px 14px;
+    border-radius:25px;
     border:1px solid #ccc;
-    text-decoration:none;
-    border-radius:5px;
+    box-sizing:border-box;
 }
-.pagination a.active { background:#4facfe; color:white; }
+
+button{
+    padding:10px;
+    border:none;
+    border-radius:25px;
+    background:#4facfe;
+    color:#fff;
+    cursor:pointer;
+}
+
+table{width:100%;margin-top:20px}
+th,td{padding:10px;text-align:center}
+tr:hover{background:#f1f5f9;cursor:pointer}
+
+img{width:50px;height:50px;border-radius:50%}
+
+.modal{
+    display:none;
+    position:fixed;
+    top:0;left:0;
+    width:100%;height:100%;
+    background:rgba(0,0,0,.5);
+}
+
+.modal-content{
+    background:#fff;
+    margin:5% auto;
+    padding:20px;
+    width:700px;
+    max-width:95%;
+    border-radius:10px;
+}
+
+.pagination{text-align:center;margin-top:20px}
+.pagination a{
+    display:inline-block;
+    margin:4px;
+    padding:8px 14px;
+    border-radius:20px;
+    background:#f1f5f9;
+    text-decoration:none;
+    color:#333;
+}
+.pagination a.active{
+    background:#4facfe;
+    color:#fff;
+    font-weight:bold;
+}
+
+/* SUCCESS MODAL */
+#successModal .modal-content{
+    width:300px;
+    text-align:center;
+    padding:25px;
+}
 </style>
-
 </head>
-<body>
 
+<body>
 <div class="container">
 
 <h2>Employee Management</h2>
 
-<!-- FORM -->
-<form method="POST" enctype="multipart/form-data">
+<input type="text" id="search" placeholder="🔍 Search...">
 
-<input type="hidden" name="id" value="<?= $edit ? $editData['employee_id'] : '' ?>">
-<input type="hidden" name="old_image" value="<?= $edit ? $editData['image'] : '' ?>">
+<button onclick="openModal()">+ Add Employee</button>
 
-<input type="text" name="name" placeholder="Name" required value="<?= $edit ? $editData['name'] : '' ?>">
-
-<select name="status" required>
-<option value="">Select Status</option>
-<option value="Permanent" <?= ($edit && $editData['status']=="Permanent")?"selected":"" ?>>Permanent</option>
-<option value="Contract of Service" <?= ($edit && $editData['status']=="Contract of Service")?"selected":"" ?>>Contract of Service</option>
-</select>
-
-<input type="text" name="gender" placeholder="Gender" value="<?= $edit ? $editData['gender'] : '' ?>">
-<input type="date" name="date_of_birth" value="<?= $edit ? $editData['date_of_birth'] : '' ?>">
-<input type="text" name="nosca_item_number" placeholder="NOSCA Item Number" value="<?= $edit ? $editData['nosca_item_number'] : '' ?>">
-<input type="text" name="place_of_assignment" placeholder="Place of Assignment" value="<?= $edit ? $editData['place_of_assignment'] : '' ?>">
-<input type="text" name="position_title" placeholder="Position Title" value="<?= $edit ? $editData['position_title'] : '' ?>">
-<input type="text" name="salary_grade" placeholder="Salary Grade" value="<?= $edit ? $editData['salary_grade'] : '' ?>">
-<input type="text" name="civil_service_eligibility" placeholder="Eligibility" value="<?= $edit ? $editData['civil_service_eligibility'] : '' ?>">
-<input type="text" name="education" placeholder="Education" value="<?= $edit ? $editData['education'] : '' ?>">
-<input type="date" name="date_of_appointment" value="<?= $edit ? $editData['date_of_appointment'] : '' ?>">
-
-<input type="file" name="image">
-
-<?php if ($edit): ?>
-<button name="update">Update</button>
-<?php else: ?>
-<button name="add">Add</button>
-<?php endif; ?>
-
-<!-- RESET ONLY INPUT FIELDS -->
-<button type="button" class="reset-btn" onclick="resetForm()">🔄</button>
-
-</form>
-
-<!-- FILTER -->
-<form method="GET" style="margin-top:15px;">
+<form method="GET">
 <select name="status" onchange="this.form.submit()">
 <option value="">All</option>
-<option value="Permanent" <?= ($statusFilter=="Permanent")?"selected":"" ?>>Permanent</option>
-<option value="Contract of Service" <?= ($statusFilter=="Contract of Service")?"selected":"" ?>>Contract of Service</option>
+<option value="Permanent" <?=($statusFilter=="Permanent")?"selected":""?>>Permanent</option>
+<option value="Contract of Service" <?=($statusFilter=="Contract of Service")?"selected":""?>>COS</option>
 </select>
-<input type="hidden" name="page" value="1">
 </form>
 
-<!-- TABLE -->
+<div id="table-data">
 <table>
-<tr>
-<th>ID</th>
-<th>Image</th>
-<th>Name</th>
-<th>Status</th>
-<th>Actions</th>
-</tr>
+<tr><th>ID</th><th>Image</th><th>Name</th><th>Status</th><th>Actions</th></tr>
 
-<?php while($row = $result->fetch_assoc()): ?>
-<tr>
+<?php while($row=$result->fetch_assoc()): ?>
+<tr onclick='showProfile(<?= json_encode($row) ?>)'>
 <td><?= $row['employee_id'] ?></td>
 
 <td>
@@ -270,50 +227,142 @@ img { width:50px; height:50px; object-fit:cover; border-radius:50%; }
 </td>
 
 <td><?= htmlspecialchars($row['name']) ?></td>
-
-<td class="<?= strtolower($row['status'])=='permanent'?'permanent':'cos' ?>">
-<?= $row['status'] ?>
-</td>
+<td><?= $row['status'] ?></td>
 
 <td>
-<a href="?edit=<?= $row['employee_id'] ?>&page=<?= $page ?>&status=<?= $statusFilter ?>">Edit</a>
-<a href="?delete=<?= $row['employee_id'] ?>&page=<?= $page ?>&status=<?= $statusFilter ?>" onclick="return confirm('Delete?')">Delete</a>
+<a href="?edit=<?= $row['employee_id'] ?>&status=<?= $statusFilter ?>">Edit</a>
+<a href="?delete=<?= $row['employee_id'] ?>&status=<?= $statusFilter ?>">Delete</a>
 </td>
 </tr>
 <?php endwhile; ?>
-
 </table>
+</div>
 
-<!-- PAGINATION -->
 <div class="pagination">
-
-<?php if ($page > 1): ?>
-<a href="?page=<?= $page-1 ?>&status=<?= $statusFilter ?>">Prev</a>
-<?php endif; ?>
-
-<?php for ($i=1; $i<=$totalPages; $i++): ?>
-<a href="?page=<?= $i ?>&status=<?= $statusFilter ?>" class="<?= ($i==$page)?'active':'' ?>">
-<?= $i ?>
+<?php for($i=1;$i<=$totalPages;$i++): ?>
+<a href="?page=<?=$i?>&status=<?=$statusFilter?>" class="<?=($i==$page)?'active':''?>">
+<?=$i?>
 </a>
 <?php endfor; ?>
+</div>
 
-<?php if ($page < $totalPages): ?>
-<a href="?page=<?= $page+1 ?>&status=<?= $statusFilter ?>">Next</a>
+</div>
+
+<!-- MODAL FORM -->
+<div id="formModal" class="modal">
+<div class="modal-content">
+
+<span onclick="closeModal()" style="float:right;cursor:pointer;">&times;</span>
+
+<form method="POST" enctype="multipart/form-data">
+
+<input type="hidden" name="id" value="<?= $edit?$editData['employee_id']:'' ?>">
+<input type="hidden" name="old_image" value="<?= $edit?$editData['image']:'' ?>">
+
+<div class="form-grid">
+
+<div class="form-group full">
+<label>Name</label>
+<input name="name" value="<?= $edit?$editData['name']:'' ?>" required>
+</div>
+
+<div class="form-group">
+<label>Status</label>
+<select name="status">
+<option value="Permanent" <?=($edit && $editData['status']=="Permanent")?"selected":""?>>Permanent</option>
+<option value="Contract of Service" <?=($edit && $editData['status']=="Contract of Service")?"selected":""?>>COS</option>
+</select>
+</div>
+
+<div class="form-group">
+<label>Gender</label>
+<input name="gender" value="<?= $edit?$editData['gender']:'' ?>">
+</div>
+
+<div class="form-group">
+<label>Date of Birth</label>
+<input type="date" name="date_of_birth" value="<?= $edit?$editData['date_of_birth']:'' ?>">
+</div>
+
+<div class="form-group">
+<label>NOSCA Item Number</label>
+<input name="nosca_item_number" value="<?= $edit?$editData['nosca_item_number']:'' ?>">
+</div>
+
+<div class="form-group">
+<label>Place of Assignment</label>
+<input name="place_of_assignment" value="<?= $edit?$editData['place_of_assignment']:'' ?>">
+</div>
+
+<div class="form-group">
+<label>Position Title</label>
+<input name="position_title" value="<?= $edit?$editData['position_title']:'' ?>">
+</div>
+
+<div class="form-group">
+<label>Salary Grade</label>
+<input name="salary_grade" value="<?= $edit?$editData['salary_grade']:'' ?>">
+</div>
+
+<div class="form-group">
+<label>Civil Service Eligibility</label>
+<input name="civil_service_eligibility" value="<?= $edit?$editData['civil_service_eligibility']:'' ?>">
+</div>
+
+<div class="form-group">
+<label>Education</label>
+<input name="education" value="<?= $edit?$editData['education']:'' ?>">
+</div>
+
+<div class="form-group">
+<label>Date of Appointment</label>
+<input type="date" name="date_of_appointment" value="<?= $edit?$editData['date_of_appointment']:'' ?>">
+</div>
+
+<div class="form-group full">
+<label>Employee Image</label>
+<input type="file" name="image">
+</div>
+
+<?php if($edit): ?>
+<button name="update" class="full">Update</button>
+<?php else: ?>
+<button name="add" class="full">Add</button>
 <?php endif; ?>
 
 </div>
+</form>
 
 </div>
+</div>
 
-<!-- RESET SCRIPT -->
+<!-- SUCCESS MODAL -->
+<div id="successModal" class="modal">
+<div class="modal-content">
+<h3 id="successText"></h3>
+<button onclick="closeSuccess()">OK</button>
+</div>
+</div>
+
 <script>
-function resetForm() {
-    const form = document.querySelector("form");
-    form.reset();
+function openModal(){formModal.style.display="block"}
+function closeModal(){formModal.style.display="none"}
 
-    const file = form.querySelector('input[type="file"]');
-    if (file) file.value = "";
+function showSuccess(msg){
+document.getElementById("successText").innerText=msg;
+document.getElementById("successModal").style.display="block";
 }
+function closeSuccess(){
+document.getElementById("successModal").style.display="none";
+}
+
+<?php if($edit): ?>
+document.getElementById("formModal").style.display="block";
+<?php endif; ?>
+
+<?php if(!empty($successMessage)): ?>
+showSuccess("<?= $successMessage ?>");
+<?php endif; ?>
 </script>
 
 </body>
